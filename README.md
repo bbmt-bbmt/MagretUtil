@@ -83,7 +83,7 @@ Explication des options:
                  On peut utiliser les "" pour passer plusieurs parametres
 ```
 
-# cmp
+## cmp
 Compare le resultat de la commande run par rapport au resultat d'une machine donnée
 ```
 cmp <nom_machine> [--seuil=s]
