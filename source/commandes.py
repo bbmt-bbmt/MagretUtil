@@ -324,6 +324,8 @@ Commandes :
   users: commande pour manipuler les usilisateurs locaux
   update: met à jours les salles sélectionnées
   run: execute une commande à distance
+  cmp: compare les résultats d'une commande run
+  errors: affiche les erreurs des machines en rouge
   put: envoie un fichier dans un repertoire de destination sur les machines
   flush: écrit un fichier csv contenant les résultats de la dernière commande
   wol: allume les machines selectionnées
