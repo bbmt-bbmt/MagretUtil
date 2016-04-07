@@ -82,6 +82,18 @@ Explication des options:
 --param=<param>  permet de passer des parametres avec un tirer.
                  On peut utiliser les "" pour passer plusieurs parametres
 ```
+
+# cmp
+Compare le resultat de la commande run par rapport au resultat d'une machine donnée
+```
+cmp <nom_machine> [--seuil=s]
+```
+Explicatio  des options:
+```
+--seuil=s  le seuil en pourcentage d'acceptation
+           ou de rejet pour la comparaison [default: 100]
+```
+
 ## put
 envoie un fichier dans un répertoire donné sur la machine distante:
 ```
@@ -92,6 +104,14 @@ put <path_file> <path_dir>
 écrit tous les résultats (après une commanderun) des machines selectionnées dans un fichier csv
 ```
 flush
+```
+
+## errors
+affiche ou efface les erreurs des machines en rouge
+```
+errors <machine>
+errors *
+errors clear
 ```
 
 ## wol
@@ -110,3 +130,34 @@ shutdown *
 
 ## quit
 quitte
+
+# Exemple
+On selectionne toutes les salles mis dans le fichier conf.ini
+```
+select *
+```
+on execute une commande dos:
+```
+run cmd ipconfig|findstr /R "Passerelle"
+```
+on affiche le résultat de la commande du poste SDE-P01
+```
+run result SDE-P01
+```
+on compare le resultat avec les machines selectionnées
+```
+cmp SDE-P01
+```
+on execute flash.exe avec l'option -install sans attendre le résultat de la commande
+```
+run file flash.exe --param=-install --no-wait
+```
+on nettoie les dossiers resté sur les machines
+```
+run clean
+```
+on affiche les erreurs éventuelles:
+```
+errors *
+```
+
