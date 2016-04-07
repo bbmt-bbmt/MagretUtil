@@ -1,5 +1,7 @@
 # MagretUtil
-psexec like pour réseaux Magret
+psexec like utilisant wmi pour réseaux Magret.
+
+Le logiciel est multithreadé par salle.
 
 # liste des commandes disponible
 pour afficher l'aide d'une commande
