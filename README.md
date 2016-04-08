@@ -13,7 +13,7 @@ Les options entre [] sont facultatives.
 
 
 ## selected
-affiche les salles sélectionné
+Affiche les salles sélectionnées.
 
 
 vert  -> la machine est allumée
@@ -23,64 +23,65 @@ gris  -> la machine est éteinte
 rouge -> la machine est en erreur
 
 ## select
-selectionne les salles où les prochaines commandes agiront
+Selectionne les salles où les prochaines commandes agiront.
 ```
 select <salle>
 select *
 ```
 
 ## users
-Modifie les utilisateurs sur les stations sélectionnées
+Modifie les utilisateurs sur les stations sélectionnées.
 
-ajouter un utilisateur:
+Ajouter un utilisateur:
 ```
 users add <name> <password> [<admin>]  
 ```
-effacer un utilisateur:
+Effacer un utilisateur:
 ```
 users del <name> 
 ```
-afficher tous les utilisateurs:
+Afficher tous les utilisateurs:
 ```
 users show
 ``` 
 gris -> utilisateur désactivé | vert -> utilisateur actif | asterix rouge -> l'utilisateur est administrateur
-changer le password de l'utilisateur:
+
+Changer le password de l'utilisateur:
 ```
 users chpass <name> <password>
 ```
-afficher tous les groupes d'un utilisateur
+Afficher tous les groupes d'un utilisateur
 ```
 users groupes <name>
 ```
 
 ## update
-met à jours les salles sélectionnées
+Met à jours les salles sélectionnées.
 
 ## run
-lance une commande ou un executable à distance
+Lance une commande dos ou un executable à distance.
 
-lancer une commande dos:
+Lancer une commande dos:
 ```
 run cmd <commande> [<parametre>...] [--param=<param>] [--timeout=t] [--no-wait]
 ```
-lancer un executable:
+Lancer un executable:
 ```
 run file <nom_fichier> [<option>...] [--param=<param>] [--timeout=t] [--no-wait]
 ```
-afficher le résultat de la dernière commande d'une machine
+Afficher le résultat de la dernière commande d'une machine
 ```
 run result <machine>
 ```
-nettoyer le dossier resté sur la machine lors d'erreur ou de l'utilisation de --no-wait
+Nettoyer le dossier resté sur la machine lors d'erreurs ou de l'utilisation de --no-wait
 ```
 run clean
 ```
 
-Explication des options:
+Explications des options:
 ```
 --timeout=<t>    temps pour attendre la fin de l'execution en seconde
---no-wait        si l'option est spécifié, on n'attend pas la réponse de la commande
+--no-wait        si l'option est spécifiée, on n'attend pas la réponse de la commande
 --param=<param>  permet de passer des parametres avec un tirer.
                  On peut utiliser les "" pour passer plusieurs parametres
 ```
@@ -90,26 +91,26 @@ Compare le resultat de la commande run par rapport au resultat d'une machine don
 ```
 cmp <nom_machine> [--seuil=s]
 ```
-Explicatio  des options:
+Explications  des options:
 ```
 --seuil=s  le seuil en pourcentage d'acceptation
            ou de rejet pour la comparaison [default: 100]
 ```
 
 ## put
-envoie un fichier dans un répertoire donné sur la machine distante:
+Envoie un fichier dans un répertoire donné sur la machine distante:
 ```
 put <path_file> <path_dir>
 ```
 
 ## flush
-écrit tous les résultats (après une commanderun) des machines selectionnées dans un fichier csv
+Ecrit tous les résultats (après une commande run) des machines selectionnées dans un fichier csv
 ```
 flush
 ```
 
 ## errors
-affiche ou efface les erreurs des machines en rouge
+Affiche ou efface les erreurs des machines affichées en rouge
 ```
 errors <machine>
 errors *
@@ -117,14 +118,14 @@ errors clear
 ```
 
 ## wol
-allume les machines selectionnées. Un dossier mac doit être crée pour stocker les adresses mac lorsque la machine est vue pour la première fois.
+Allume les machines selectionnées. Un dossier mac doit être crée pour stocker les adresses mac lorsque la machine est vue pour la première fois.
 ```
 wol <machine>
 wol *
 ```
 
 ## shutdown
-éteint les machines sélectionnées
+Eteint les machines sélectionnées.
 ```
 shutdown <machine>
 shutdown *
@@ -133,32 +134,32 @@ shutdown *
 ## quit
 quitte
 
-# Exemple
-On selectionne toutes les salles mis dans le fichier conf.ini
+# Exemples
+On selectionne toutes les salles mises dans le fichier conf.ini:
 ```
 select *
 ```
-on execute une commande dos:
+On execute une commande dos:
 ```
 run cmd ipconfig|findstr /R "Passerelle"
 ```
-on affiche le résultat de la commande du poste SDE-P01
+On affiche le résultat de la commande du poste SDE-P01:
 ```
 run result SDE-P01
 ```
-on compare le resultat avec les machines selectionnées
+On compare le resultat avec les machines selectionnées:
 ```
 cmp SDE-P01
 ```
-on execute flash.exe avec l'option -install sans attendre le résultat de la commande
+On execute flash.exe avec l'option -install sans attendre le résultat de la commande:
 ```
 run file flash.exe --param=-install --no-wait
 ```
-on nettoie les dossiers resté sur les machines
+On nettoie les dossiers restés sur les machines:
 ```
 run clean
 ```
-on affiche les erreurs éventuelles:
+On affiche les erreurs éventuelles:
 ```
 errors *
 ```
