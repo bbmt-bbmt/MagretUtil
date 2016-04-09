@@ -21,7 +21,7 @@ def main():
 
 
 def create_file(filename, file_text):
-    """Racourci pour crée un fichier rapidement """
+    """Racourci pour crer un fichier rapidement """
     dir = os.path.dirname(filename)
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -31,7 +31,7 @@ def create_file(filename, file_text):
 
 
 class PsExec:
-    """Implément psexec en python
+    """Implémente psexec en python
     il faut avoir les droits pour accéder au partage administratif """
 
     # variable de classe pour être thread et multiprocess safe
@@ -50,8 +50,8 @@ class PsExec:
             self.connection = wmi.WMI(self.ip)
 
     def _watcher_process_del(self, process_id, timeout=None):
-        """Attend qu'un process se terminie au lance une excepction après
-        timeout (la méthode watch_for du module wmi ne marche pas tout le temps
+        """Attend qu'un process se termine et lance une excepction timeout après
+         (la méthode watch_for du module wmi ne marche pas tout le temps
         """
         start = time.time()
         while True:
@@ -67,7 +67,7 @@ class PsExec:
         """Lance la commande dos cmd sur la machine avec un
         timeout si nécessaire
         retourne 1 si la commande n'a pas pu être lancé par wmi
-        lance des exceptions si les fichiers ne peuvent output.*
+        lance des exceptions si les fichiers output.* ne peuvent
         pas être crées ou copiés
         (output.bat contient la commande à éxécuter
         output.txt contient le résultat de la commande) """
@@ -152,7 +152,7 @@ class PsExec:
         return return_value, output_data
 
     def _net_copy(self, source, dest_dir):
-        """ Copies files ou repertoire sur la machine. """
+        """ Copie fichiers ou repertoire sur la machine. """
         self._wnet_connect()
         dest_dir = self._covert_unc(dest_dir)
         # rajoute le backslash si pas présent.
@@ -170,7 +170,7 @@ class PsExec:
         shutil.copy(source, dest_dir)
 
     def _net_copy_back(self, source_file, dest_file):
-        """ Copies files et repertoire sur la machine. """
+        """ Copies fichiers ou repertoire sur la machine. """
         self._wnet_connect()
         source_unc = self._covert_unc(source_file)
         shutil.copyfile(source_unc, dest_file)
@@ -191,7 +191,7 @@ class PsExec:
             raise err
 
     def _covert_unc(self, path):
-        """ Convert path vers UNC path."""
+        """ Convertie path vers UNC path."""
         return ''.join(['\\\\', self.ip, '\\', path.replace(':', '$')])
 
     def _delete(self, path):
@@ -206,7 +206,7 @@ class PsExec:
             os.remove(path)
 
     def _net_delete(self, path):
-        """ Efface files et repertoire sur la machine. """
+        """ Efface fichiers ou repertoire sur la machine. """
         self._wnet_connect()
 
         path = self._covert_unc(path)

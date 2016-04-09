@@ -57,7 +57,7 @@ class Salle:
         return
 
     def _run_threads(self, callback, *param, **kwargs):
-        """fonction qui lance les les threads de la fonction callback avec
+        """fonction qui lance les threads de la fonction callback avec
         les paramètre *param"""
         result = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
@@ -231,7 +231,7 @@ class Salle:
         return resultat
 
     def presentation(self, liste_str):
-        """utiliser par str_users et str_user_group pour adapter la sortie en
+        """utilisé par str_users et str_user_group pour adapter la sortie en
 fonction du nombre de colonne de la console """
         columns_term = os.get_terminal_size().columns
         str_resultat = ""
@@ -313,15 +313,6 @@ fonction du nombre de colonne de la console """
 
 
 def main():
-    import colorama
-    colorama.init()
-    print('debut', pythoncom._GetInterfaceCount())
-    sde = Salle('SDE', 4)
-    print('avant str_user', pythoncom._GetInterfaceCount())
-    print(sde.str_users())
-    print('apres str_user', pythoncom._GetInterfaceCount())
-    sde.update()
-    print('apres update', pythoncom._GetInterfaceCount())
     pass
 
 if __name__ == '__main__':

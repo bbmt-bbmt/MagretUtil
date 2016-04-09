@@ -1,12 +1,6 @@
 #! python3
 # coding: utf-8
 
-# todo
-#
-# -> reflechie sur qui fait quoi : try raise
-# -> erreur sur l'initialisation des string ne plus mettre '' mais None
-# -> integrer pdb postmortem
-
 import sys
 import os
 import configparser
@@ -83,7 +77,6 @@ def lire_fichier_ini(fichier):
 def erreur_final(e_type, e_value, e_tb):
     print('erreur critique, voir le fichier de log')
     logger.critical(''.join(traceback.format_exception(e_type, e_value, e_tb)))
-    # logger.critical(str(e_type), str(e_value))
     # pdb.post_mortem(e_tb)
     return
 
@@ -124,7 +117,7 @@ def main():
 
             # nettoie une partie de ceux qui a été laissé par les threads
             # de la dernière commande
-            # contrôle l'augmentation de la mémoire par le multithread
+            # contrôle l'augmentation de la mémoire pour le multithread
             gc.collect()
             # print('com-ref: ', pythoncom._GetInterfaceCount())
             print('-'*(os.get_terminal_size().columns-1))

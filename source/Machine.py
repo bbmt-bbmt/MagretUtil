@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import socket
-import netifaces
 import struct
 import win32net
 import win32netcon
@@ -39,8 +38,6 @@ class Machine:
         self.message_erreur = ""
         self.last_output_cmd = ""
         self.update_etat()
-        # self._psexec = Psexec.PsExec(self.name, REMOTE_PATH)
-
         return
 
     def wol(self):
@@ -146,55 +143,6 @@ class Machine:
         finally:
             _psexec = None
         return
-
-    def _init_ip_mac(self, result_ping):
-        """initialise l'adresse ip et mac de la machine
-->pour un ordi distant -> methode avec arp
--> pour un ordi local -> methode avec netifaces"""
-
-        # on tente de récupérer l'ip d'après le ping
-        try:
-            if self.etat == ALLUME:
-                match = re.search(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}', result_ping)
-                self.ip = match.group(0)
-        except IndexError:
-            self.message_erreur += "erreur lors de la récupération de l'ip\n"
-            # logger.warning(self.name + ": " + str(i))
-
-        try:
-            # si le fichier qui stocke l'adresse mac existe,
-            # on tente de le récupérer
-            with open('mac\\' + self.name+'.txt', 'r') as f:
-                self.mac = f.readline().strip('\n')
-        except FileNotFoundError:
-            # si l'ip n'a pas été récupérer, on lache l'affaire pour mac
-            if self.ip is None:
-                return
-
-            # l'ordi est distant
-            arp_data = subprocess.check_output(["arp", "-a", self.ip], shell=True)
-            arp_data = arp_data.decode('cp850')
-            self.mac = re.findall(r"((?:\w{2}\-{1}){5}\w{2})", arp_data)
-            try:
-                self.mac = self.mac[0]
-            except:
-                # on est en local et arp ne marche pas, on passe par les interfaces
-                for interface in netifaces.interfaces():
-                    try:
-                        if netifaces.ifaddresses(interface)[netifaces.AF_INET][0]['addr'] == self.ip:
-                            self.mac = netifaces.ifaddresses(interface)[netifaces.AF_LINK][0]['addr']
-                    except KeyError:
-                        # on pass quand on est sur une ip6 qui n'a pas de key AF_LINK
-                        pass
-
-            # on enregistre l'adresse mac dans un fichier si le dossier mac existe
-            if self.mac != '':
-                if os.path.isdir('mac'):
-                    with open(os.path.join('mac', self.name+'.txt'), 'w') as f:
-                        f.write(self.mac)
-            else:
-                self.message_erreur += "erreur lors de la récupération de l'adresse mac\n"
-                # logger.warning(self.name + ": " + " aucune adresse mac trouvé, vérifiez la connection")
 
     def ping(self):
         try:
@@ -341,14 +289,11 @@ efface les erreurs, met à jour l'état, l'ip """
         if self.etat == ETEINT:
             resultat += "éteint"
             return resultat
-        # print('dans machine avant lister user', pythoncom._GetInterfaceCount())
         users = self.lister_users()
-        # print('dans machine apres lister user', pythoncom._GetInterfaceCount())
 
         for user in users:
             # list un dict recupere ses keys
             nom = list(user)[0]
-            # print('dans machine qd on liste users', pythoncom._GetInterfaceCount())
             nom_coul = nom
             status = user[nom]
             if status != 'Degraded':
