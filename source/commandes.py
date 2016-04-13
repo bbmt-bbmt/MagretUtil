@@ -261,10 +261,10 @@ Usage:
 
 
 def wol(param):
-    """Réveil une machine ou les salles selectionnées (wol *)
+    """Réveil une machine ou les salles selectionnées
 
 Usage:
-  wol [help] <machine>
+  wol [help] [<machine>]
   wol help
 """
     global salles, selected_salles, machines_dict
@@ -273,7 +273,7 @@ Usage:
     if arg['help']:
         print(doc)
         return
-    if '*' in arg['<machine>']:
+    if arg['<machine>'] is None:
         for salle in selected_salles:
             salle.wol()
     else:
@@ -288,10 +288,10 @@ Usage:
 
 
 def shutdown(param):
-    """Eteint une machine ou les salles selectionnées (shutdown *)
+    """Eteint une machine ou les salles selectionnées
 
 Usage:
-  shutdown [help] <machine>
+  shutdown [help] [<machine>]
   shutdown help
 """
     global salles, selected_salles, machines_dict
@@ -300,7 +300,7 @@ Usage:
     if arg['help']:
         print(doc)
         return
-    if '*' in arg['<machine>']:
+    if arg['<machine>'] is None:
         for salle in selected_salles:
             salle.shutdown()
     else:
@@ -339,14 +339,13 @@ Commandes :
 
 
 def errors(param):
-    """Affiche les erreurs des machines affichées en rouge.
-utiliser * pour tout afficher.
+    """Affiche les erreurs des machines selectionnées qui sont affichées en rouge.
 errors clear efface toutes les erreurs
 
 Usage:
   errors clear
   errors help
-  errors <machine>
+  errors [<machine>]
 
 """
     global salles, selected_salles, machines_dict
@@ -362,7 +361,7 @@ Usage:
                 machine.message_erreur = ''
         selected([])
         return
-    if '*' in arg['<machine>']:
+    if arg['<machine>'] is None:
         for salle in selected_salles:
             str_resultat += salle.str_erreurs()
     else:
