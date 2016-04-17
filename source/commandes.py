@@ -15,6 +15,8 @@ from colorama import Fore
 
 def select(param):
     """Sélectionne les groupes, utiliser * pour tout selectionner
+En utilisant select reg il est possible d'utiliser une expression régulière
+pour sélectionner les salles
 
 Usage:
   select help
