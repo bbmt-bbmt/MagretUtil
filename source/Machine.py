@@ -283,9 +283,7 @@ efface les erreurs, met à jour l'état, l'ip """
 
     def str_users(self):
         """ Retourne un string formatter avec colorama de la fonction lister_user()"""
-        num = self.name.split('-')[1][1:]
-        resultat = num + ': '
-
+        resultat = self.name + ': '
         if self.etat == ETEINT:
             resultat += "éteint"
             return resultat
@@ -306,8 +304,7 @@ efface les erreurs, met à jour l'état, l'ip """
     def str_user_groups(self, user):
         """Retourne un string formatter avec colorama de la fonction groupes_user() """
         groups = self.groupes_user(user)
-        num = self.name.split('-')[1][1:]
-        resultat = num + ': ' + user + '-> '
+        resultat = self.name + ': ' + user + '-> '
         if self.etat == ETEINT:
             resultat += "éteint"
             return resultat

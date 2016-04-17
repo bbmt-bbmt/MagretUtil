@@ -11,6 +11,6 @@ def fix_str(string):
     table_translate = str.maketrans(char_w1252, char_utf8)
     return string.translate(table_translate)
 
-salles = []
-selected_salles = []
+groupes = []
 machines_dict = {}
+selected_groupes = []

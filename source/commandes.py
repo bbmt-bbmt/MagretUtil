@@ -4,37 +4,58 @@
 # todo:
 # la fonction exec est un mot clé python il faut changer le nom
 
+import re
 import docopt2
 import gc
 from var_global import *
 import os
+from Groupe import Groupe
 from colorama import Fore
 
 
 def select(param):
-    """Sélectionne les salles, utiliser * pour tout selectionner
+    """Sélectionne les groupes, utiliser * pour tout selectionner
 
 Usage:
-  select [help] <nom>...
   select help
+  select reg <expression_reg>
+  select <nom>...
 """
-    global salles, selected_salles
+    global groupes, selected_groupes, machines_dict
 
     doc = select.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
-    if '*' in arg['<nom>']:
-        selected_salles = salles
-    else:
-        selected_salles = [s for s in salles if s.name in arg['<nom>']]
-    print("\n".join([m.str_salle() for m in selected_salles]).strip())
+    if arg['reg']:
+        pattern = re.compile(arg['<expression_reg>'])
+        selected_groupes = [g for g in groupes if pattern.fullmatch(g.name)]
+        selected_machines_groupes = [m.name for g in selected_groupes for m in g]
+        selected_machines = [name for name in machines_dict if pattern.fullmatch(name) and name not in selected_machines_groupes]
+        if selected_machines:
+            selected_groupes.append(Groupe('AUTRES', selected_machines))
+    if arg['<nom>']:
+        if '*' in arg['<nom>']:
+            selected_groupes = groupes
+        else:
+            # on sélectionne les groupes de la commande select
+            selected_groupes = [g for g in groupes if g.name in arg['<nom>']]
+            # on récupère les noms des machines déja mis dans les groupes selectionnés
+            selected_machines_groupes = [m.name for g in selected_groupes for m in g]
+            # on sélectionne les machines de la commande select sauf si elles
+            # existent déja dans un groupe
+            selected_machines = [name for name in machines_dict if name in arg['<nom>'] and name not in selected_machines_groupes]
+            # si la liste des machines à sélectionner n'est pas vide
+            # on crée le groupe AUTRES
+            if selected_machines:
+                selected_groupes.append(Groupe('AUTRES', selected_machines))
+    selected([])
     return
 
 
 def selected(param):
-    """Affiche les salles sélectionnées
+    """Affiche les groupes sélectionnées
 en vert la machine est allumée
 en gris la machine est éteinte
 en rouge la machine a un message d'erreur (utiliser errors pour l'afficher)
@@ -42,36 +63,36 @@ en rouge la machine a un message d'erreur (utiliser errors pour l'afficher)
 Usage:
   selected [help]
 """
-    global salles, selected_salles
+    global groupes, selected_groupes, machines_dict
     doc = selected.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         return print(doc)
-    if selected_salles == []:
-        print('Auncune salle sélectionnée')
+    if selected_groupes == []:
+        print('Auncun groupe sélectionné')
     else:
         print('-'*(os.get_terminal_size().columns-1))
-        print("\n".join([m.str_salle() for m in selected_salles]).strip())
+        print("\n".join([m.str_groupe() for m in selected_groupes]).strip())
     return
 
 
 def update(param):
-    """Met à jour les stations allumées ou éteintes des salles selectionnées
+    """Met à jour les stations allumées ou éteintes des groupes selectionnées
 
 Usage:
   update [help]
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = update.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
-    for salle in selected_salles:
+    for groupe in selected_groupes:
         machines_dict.clear()
-        salle.update()
-        machines_dict.update({machine.name: machine for s in salles for machine in s})
+        groupe.update()
+        machines_dict.update({machine.name: machine for s in groupes for machine in s})
         gc.collect()
     selected([])
     return
@@ -91,7 +112,7 @@ Usage:
   users groupes <name>
   users help
 """
-    global salles, selected_salles
+    global groupes, selected_groupes
 
     doc = users.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -100,18 +121,18 @@ Usage:
         print(doc)
         return
 
-    for salle in selected_salles:
+    for groupe in selected_groupes:
         if arg['add']:
             groupes = ['Administrateurs'] if arg['<admin>'] == 'admin' else ['Utilisateurs']
-            salle.add_user(arg['<name>'], arg['<password>'], groupes)
+            groupe.add_user(arg['<name>'], arg['<password>'], groupes)
         if arg['del']:
-            salle.del_user(arg['<name>'])
+            groupe.del_user(arg['<name>'])
         if arg['show']:
-            str_resultat += salle.str_users()
+            str_resultat += groupe.str_users()
         if arg['chpass']:
-            salle.chpwd_user(arg['<name>'], arg['<password>'])
+            groupe.chpwd_user(arg['<name>'], arg['<password>'])
         if arg['groupes']:
-            str_resultat += salle.str_user_groups(arg['<name>'])
+            str_resultat += groupe.str_user_groups(arg['<name>'])
 
     if str_resultat != '':
         print('-'*(os.get_terminal_size().columns-1))
@@ -142,7 +163,7 @@ Options:
     --param=<param>  permet de passer des parametres avec un tirer.
                      On peut utiliser les "" pour passer plusieurs parametres
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = run.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -158,12 +179,12 @@ Options:
     if arg['cmd']:
         list_join = [arg['<commande>']] + arg['<parametre>'] + [arg['--param'].strip('"')]
         cmd = ' '.join(list_join)
-        for salle in selected_salles:
-            salle.run_remote_cmd(cmd, timeout, arg["--no-wait"])
+        for groupe in selected_groupes:
+            groupe.run_remote_cmd(cmd, timeout, arg["--no-wait"])
         selected([])
     if arg['file']:
-        for salle in selected_salles:
-            salle.run_remote_file(arg['<nom_fichier>'], " ".join(arg['<option>'] + [arg['--param'].strip('"')]), timeout, arg["--no-wait"])
+        for groupe in selected_groupes:
+            groupe.run_remote_file(arg['<nom_fichier>'], " ".join(arg['<option>'] + [arg['--param'].strip('"')]), timeout, arg["--no-wait"])
         selected([])
     if arg['result']:
         if arg['<machine>'] in machines_dict.keys():
@@ -174,8 +195,8 @@ Options:
         else:
             print("%s n'existe pas" % arg['<machine>'])
     if arg['clean']:
-        for salle in selected_salles:
-            salle.clean()
+        for groupe in selected_groupes:
+            groupe.clean()
         selected([])
     return
 
@@ -192,7 +213,7 @@ Options:
   --seuil=s  le seuil en pourcentage d'acceptation
              ou de rejet pour la comparaison [default: 100]
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = cmp.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -205,7 +226,7 @@ Options:
     except KeyError:
         print("la machine n'existe pas")
         return
-    str_resultat += "\n".join([salle.str_cmp(str_ref, int(arg['--seuil'])) for salle in selected_salles])
+    str_resultat += "\n".join([groupe.str_cmp(str_ref, int(arg['--seuil'])) for groupe in selected_groupes])
     print(str_resultat)
     return
 
@@ -216,7 +237,7 @@ def flush(param):
 Usage:
   flush [help]
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = flush.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -227,9 +248,9 @@ Usage:
 
     str_file = ''
     with open("flush.csv", 'w') as flush_file:
-        for salle in selected_salles:
+        for groupe in selected_groupes:
             list_output = ['"%s"::"%s"' % (machine.name, machine.last_output_cmd)
-                           for machine in salle.machines if machine.etat == 1]
+                           for machine in groupe if machine.etat == 1]
             str_file += "\n".join(list_output)
         flush_file.write(str_file)
 
@@ -244,7 +265,7 @@ Usage:
   put [help] <path_file> <path_dir>
   put help
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = put.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -253,28 +274,28 @@ Usage:
         print(doc)
         return
 
-    for salle in selected_salles:
-        salle.put(arg['<path_file>'], arg['<path_dir>'])
+    for groupe in selected_groupes:
+        groupe.put(arg['<path_file>'], arg['<path_dir>'])
 
     selected([])
     return
 
 
 def wol(param):
-    """Réveil une machine ou les salles selectionnées
+    """Réveil une machine ou les groupes selectionnées
 
 Usage:
   wol [help] [<machine>]
   wol help
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
     doc = wol.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
     if arg['<machine>'] is None:
-        for salle in selected_salles:
+        for groupe in selected_groupes:
             salle.wol()
     else:
         try:
@@ -288,20 +309,20 @@ Usage:
 
 
 def shutdown(param):
-    """Eteint une machine ou les salles selectionnées
+    """Eteint une machine ou les groupes selectionnées
 
 Usage:
   shutdown [help] [<machine>]
   shutdown help
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
     doc = shutdown.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
     if arg['<machine>'] is None:
-        for salle in selected_salles:
+        for groupe in selected_groupes:
             salle.shutdown()
     else:
         try:
@@ -319,10 +340,10 @@ def help(param):
     """Pour avoir de l'aide sur une commande : commande help
 
 Commandes :
-  selected: affiche les salles sélectionnées
-  select: selectionne les salles à utliser (voir le fichier conf.ini)
+  selected: affiche les groupes sélectionnées
+  select: selectionne les groupes à utliser (voir le fichier conf.ini)
   users: commande pour manipuler les usilisateurs locaux
-  update: met à jours les salles sélectionnées
+  update: met à jours les groupes sélectionnées
   run: execute une commande à distance
   cmp: compare les résultats d'une commande run
   errors: affiche les erreurs des machines en rouge
@@ -333,7 +354,6 @@ Commandes :
   shutdown: éteint les machines selectionnées
   quit : quitte
 """
-    global salles, selected_salles
     print(help.__doc__)
     return
 
@@ -348,7 +368,7 @@ Usage:
   errors [<machine>]
 
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
     str_resultat = ""
     doc = errors.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -356,14 +376,14 @@ Usage:
         print(doc)
         return
     if arg['clear']:
-        for salle in selected_salles:
+        for groupe in selected_groupes:
             for machine in salle:
                 machine.message_erreur = ''
         selected([])
         return
     if arg['<machine>'] is None:
-        for salle in selected_salles:
-            str_resultat += salle.str_erreurs()
+        for groupe in selected_groupes:
+            str_resultat += groupe.str_erreurs()
     else:
         try:
             str_resultat = Fore.LIGHTRED_EX + arg['<machine>'] + ': ' +\
@@ -376,11 +396,11 @@ Usage:
 
 
 def quit(param):
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     # pour être sur que le garbage collector nettoie bien tout ceux qui a été laissé par les thread
-    salles.clear()
-    selected_salles.clear()
+    groupes.clear()
+    selected_groupes.clear()
     machines_dict.clear()
     gc.collect()
     raise SystemExit

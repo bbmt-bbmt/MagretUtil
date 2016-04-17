@@ -82,14 +82,14 @@ def erreur_final(e_type, e_value, e_tb):
 
 
 def init_salles():
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     ini_salles = lire_fichier_ini('conf.ini')
     for ini_salle, nbre in ini_salles.items():
-        salles.append(Salle(ini_salle, nbre))
-    salles.sort(key=lambda x: x.name)
+        groupes.append(Salle(ini_salle, nbre))
+    groupes.sort(key=lambda x: x.name)
 
-    machines_dict.update({machine.name: machine for s in salles for machine in s})
+    machines_dict.update({machine.name: machine for g in groupes for machine in g})
 
 
 def main():
