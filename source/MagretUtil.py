@@ -30,6 +30,7 @@ stream_handler.setLevel(logging.INFO)
 logger_info.addHandler(stream_handler)
 
 from Machine import Machine
+from Groupe import Groupe
 from Salle import Salle
 import commandes
 from var_global import *
@@ -49,29 +50,33 @@ def _remove_protect_char(lst_str):
 
 def lire_fichier_ini(fichier):
     """ Retourne les variables necessaire pour le fonctionnement retourne un
-    dictionnaire {nom_salle:nbre_poste}"""
+    dictionnaire {nom_groupe:nbre_poste}"""
     try:
         config = configparser.ConfigParser()
         config.read(fichier, encoding="utf-8-sig")
     except configparser.Error as e:
         print("erreur lors de l'initialisation du fichier ini : ")
-        print(e)
         raise SystemExit
 
-    salles_dict = {}
+    groupes_dict = {}
+    groupes_dict['GroupesMagret'] = {}
+    groupes_dict['Groupes'] = {}
     try:
-        for groupe in config['Groupes']:
-            nom_salle, num_poste = config['Groupes'][groupe].split('-')
+        for groupe in config['GroupesMagret']:
+            num_poste = config['GroupesMagret'][groupe].split('-')[1]
             nbre_poste = int(num_poste[1:])
             if nbre_poste != 0:
-                salles_dict[nom_salle] = nbre_poste
+                groupes_dict['GroupesMagret'][groupe.upper()] = nbre_poste
+
+        for groupe in config['Groupes']:
+            groupes_dict['Groupes'][groupe.upper()] = config['Groupes'][groupe]
     except ValueError:
         pass
     except Exception as e:
         print('Erreur de lecture du fichier config')
         logger.critical(e)
         raise SystemExit()
-    return salles_dict
+    return groupes_dict
 
 
 def erreur_final(e_type, e_value, e_tb):
@@ -84,16 +89,19 @@ def erreur_final(e_type, e_value, e_tb):
 def init_salles():
     global groupes, selected_groupes, machines_dict
 
-    ini_salles = lire_fichier_ini('conf.ini')
-    for ini_salle, nbre in ini_salles.items():
+    ini_groupes = lire_fichier_ini('conf.ini')
+    for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
         groupes.append(Salle(ini_salle, nbre))
+    for ini_groupe, list_machine in ini_groupes['Groupes'].items():
+        list_machine = list_machine.split(',')
+        groupes.append(Groupe(ini_groupe, list_machine))
     groupes.sort(key=lambda x: x.name)
 
     machines_dict.update({machine.name: machine for g in groupes for machine in g})
 
 
 def main():
-    # sys.excepthook = erreur_final
+    sys.excepthook = erreur_final
 
     logger_info.info('Initialisation des salles :')
     init_salles()
