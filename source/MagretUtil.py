@@ -60,8 +60,8 @@ def lire_fichier_ini(fichier):
 
     salles_dict = {}
     try:
-        for salle in config['Salles']:
-            nom_salle, num_poste = config['Salles'][salle].split('-')
+        for groupe in config['Groupes']:
+            nom_salle, num_poste = config['Groupes'][groupe].split('-')
             nbre_poste = int(num_poste[1:])
             if nbre_poste != 0:
                 salles_dict[nom_salle] = nbre_poste
@@ -93,7 +93,7 @@ def init_salles():
 
 
 def main():
-    sys.excepthook = erreur_final
+    # sys.excepthook = erreur_final
 
     logger_info.info('Initialisation des salles :')
     init_salles()
