@@ -78,8 +78,8 @@ class Machine:
 
     def shutdown(self):
         if self.etat == ALLUME:
-            self.run_remote_cmd('shutdown /s /f /t 0')
-        self.etat = ETEINT
+            subprocess.call(["shutdown", "/m", '\\\\' + self.name, "/s", "/f", "/t", "0"], stderr=subprocess.DEVNULL)
+            self.etat = ETEINT
         return
 
     def run_remote_cmd(self, cmd, timeout=None, no_wait_output=False):
