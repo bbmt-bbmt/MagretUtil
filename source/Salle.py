@@ -9,7 +9,7 @@ import difflib
 import pythoncom
 from Machine import Machine
 from Groupe import Groupe
-from var_global import *
+# from var_global import *
 from colorama import Fore
 import gc
 

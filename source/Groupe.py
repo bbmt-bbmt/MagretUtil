@@ -10,7 +10,7 @@ import difflib
 import pythoncom
 from Machine import Machine
 from Machine import REMOTE_PATH
-from var_global import *
+# from var_global import *
 from colorama import Fore
 import gc
 
