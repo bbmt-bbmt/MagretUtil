@@ -302,7 +302,7 @@ Usage:
     else:
         try:
             machines_dict[arg['<machine>']].wol()
-        except Exception:
+        except KeyError:
             print("Le poste n'existe pas")
             return
     print("wol effectué")
@@ -329,12 +329,40 @@ Usage:
     else:
         try:
             machines_dict[arg['<machine>']].shutdown()
-        except Exception as e:
-            print(e)
+        except KeyError:
             print("Le poste n'existe pas")
             return
     print("shutdown effectué")
     print("lancé la commande update pour mettre à jours l'affichage")
+    return
+
+
+def vnc(param):
+    """Lance une session vnc sur la machine donnée
+
+Usage:
+  vnc help
+  vnc open <machine>
+  vnc close <machine>
+"""
+    global groupes, selected_groupes, machines_dict
+    doc = vnc.__doc__
+    arg = docopt2.docopt(doc, argv=param, help=False)
+    if arg['help']:
+        print(doc)
+        return
+    if arg['open']:
+        try:
+            machines_dict[arg['<machine>']].vnc_open()
+        except KeyError:
+            print("La machine n'existe pas")
+            return
+    if arg['close']:
+        try:
+            machines_dict[arg['<machine>']].vnc_close()
+        except KeyError:
+            print("La machine n'existe pas")
+            return
     return
 
 

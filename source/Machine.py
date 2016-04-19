@@ -35,6 +35,7 @@ class Machine:
         self.etat = ETEINT
         self.ip = None
         self.mac = None
+        self._vnc = {}
         self.message_erreur = ""
         self.last_output_cmd = ""
         self.update_etat()
@@ -130,6 +131,75 @@ class Machine:
             # logger.error(self.name + ": " + str(f))
         finally:
             _psexec = None
+        return
+
+    def vnc_clean_process(self):
+        subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.call(['taskkill', "/F", "/S", self.name, "/IM", "winvnc.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        return
+
+    def vnc_open(self):
+        if self.etat == ETEINT:
+            return
+        self.vnc_close()
+        try:
+            _psexec = Psexec.PsExec(self.name, REMOTE_PATH)
+            self._vnc['uid'] = _psexec._get_uid()
+            remote_directory = os.path.join(_psexec.remote_path, self._vnc['uid'])
+            vnc_file = ['vnc\\winvnc.exe', 'vnc\\UltraVNC.ini', 'vnc\\vnchooks.dll']
+            self._vnc['viewer_process'] = subprocess.Popen(['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
+
+            for file in vnc_file:
+                _psexec._net_copy(file, remote_directory)
+
+            cmd1 = os.path.join(remote_directory, 'winvnc.exe -kill')
+            cmd2 = os.path.join(remote_directory, 'winvnc.exe')
+            cmd3 = os.path.join(remote_directory, 'winvnc.exe -connect ' + self.name)
+
+            SW_SHOWMINIMIZED = 0
+            startup = _psexec.connection.Win32_ProcessStartup.new(ShowWindow=SW_SHOWMINIMIZED)
+            _psexec.connection.Win32_Process.Create(CommandLine=cmd1, ProcessStartupInformation=startup)
+            self._vnc['server_pid'], return_value = _psexec.connection.Win32_Process.Create(CommandLine=cmd2, ProcessStartupInformation=startup)
+            _psexec.connection.Win32_Process.Create(CommandLine=cmd3, ProcessStartupInformation=startup)
+        except PermissionError:
+            self.message_erreur += "Vous n'avez pas les droits administrateur\n"
+            # logger.error(self.name + ": " + str(p))
+        except WmiModule.x_wmi as w:
+            self.message_erreur += "Erreur wmi: %s \n" % w.info
+            if w.com_error is not None:
+                self.message_erreur += fix_str(w.com_error.strerror)
+            # logger.error(self.name + ": " + str(w))
+        finally:
+            _psexec = None
+        return
+
+    def vnc_close(self):
+        if self.etat == ETEINT:
+            return
+        if self._vnc:
+            try:
+                self._vnc['viewer_process'].kill()
+                _psexec = Psexec.PsExec(self.name, REMOTE_PATH)
+                remote_directory = os.path.join(_psexec.remote_path, self._vnc['uid'])
+                cmd = os.path.join(remote_directory, 'winvnc.exe -kill')
+                SW_SHOWMINIMIZED = 0
+                startup = _psexec.connection.Win32_ProcessStartup.new(ShowWindow=SW_SHOWMINIMIZED)
+                _psexec.connection.Win32_Process.Create(CommandLine=cmd, ProcessStartupInformation=startup)
+                _psexec._watcher_process_del(self._vnc['server_pid'])
+                _psexec.run_remote_cmd('rd /s /q %s' % remote_directory)
+            except PermissionError:
+                self.message_erreur += "Vous n'avez pas les droits administrateur\n"
+                # logger.error(self.name + ": " + str(p))
+            except WmiModule.x_wmi as w:
+                self.message_erreur += "Erreur wmi: %s \n" % w.info
+                if w.com_error is not None:
+                    self.message_erreur += fix_str(w.com_error.strerror)
+                # logger.error(self.name + ": " + str(w))
+            finally:
+                _psexec._release_uid(self._vnc['uid'])
+                self._vnc = {}
+                _psexec = None
+        self.vnc_clean_process()
         return
 
     def put(self, file_path, dir_path):

@@ -136,6 +136,13 @@ shutdown <machine>
 shutdown *
 ```
 
+## vnc
+Lance/ferme une session vnc (ultravnc) sur la machine sélectionnée
+```
+vnc open <machine>
+vnc close <machine>
+```
+
 ## quit
 quitte
 
