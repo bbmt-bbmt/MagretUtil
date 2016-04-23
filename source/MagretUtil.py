@@ -1,14 +1,12 @@
 #! python3
 # coding: utf-8
 
-import sys
 import os
 import configparser
 import logging
 import re
 import gc
 import traceback
-
 
 from logging import FileHandler
 import colorama
@@ -19,7 +17,7 @@ logger = logging.getLogger('MagretUtil')
 logger_info = logging.getLogger('Info')
 logger.setLevel(logging.WARNING)
 logger_info.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s :: %(name)s :: %(levelname)s\n' + '='*100 + '\n%(message)s' + '='*100)
+formatter = logging.Formatter('%(asctime)s :: %(name)s :: %(levelname)s\n' + '=' * 100 + '\n%(message)s' + '=' * 100)
 # file_handler = RotatingFileHandler('error.log', mode='w', 1000000, 1)
 file_handler = FileHandler('error.log', 'w')
 file_handler.setLevel(logging.WARNING)
@@ -34,6 +32,7 @@ from Groupe import Groupe
 from Salle import Salle
 import commandes
 from var_global import *
+from Psexec import PsExec
 
 
 def _protect_quotes(text):
@@ -61,6 +60,7 @@ def lire_fichier_ini(fichier):
     groupes_dict = {}
     groupes_dict['GroupesMagret'] = {}
     groupes_dict['Groupes'] = {}
+    domaine = {}
     try:
         for groupe in config['GroupesMagret']:
             num_poste = config['GroupesMagret'][groupe].split('-')[1]
@@ -70,13 +70,17 @@ def lire_fichier_ini(fichier):
 
         for groupe in config['Groupes']:
             groupes_dict['Groupes'][groupe.upper()] = config['Groupes'][groupe]
+
+        domaine['name'] = config['Domaine']['domaine']
+        domaine['login'] = config['Domaine']['login']
+
     except ValueError:
         pass
     except Exception as e:
         print('Erreur de lecture du fichier config')
         logger.critical(e)
         raise SystemExit()
-    return groupes_dict
+    return groupes_dict, domaine
 
 
 def erreur_final(e_type, e_value, e_tb):
@@ -87,9 +91,9 @@ def erreur_final(e_type, e_value, e_tb):
 
 
 def init_salles():
-    global groupes, selected_groupes, machines_dict
+    global groupes, selected_groupes, machines_dict, domaine
 
-    ini_groupes = lire_fichier_ini('conf.ini')
+    ini_groupes, dom = lire_fichier_ini('conf.ini')
     for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
         groupes.append(Salle(ini_salle, nbre))
     for ini_groupe, list_machine in ini_groupes['Groupes'].items():
@@ -98,10 +102,15 @@ def init_salles():
     groupes.sort(key=lambda x: x.name)
 
     machines_dict.update({machine.name: machine for g in groupes for machine in g})
+    domaine.update(dom)
+    return
 
 
 def main():
-    sys.excepthook = erreur_final
+    # sys.excepthook = erreur_final
+    # local = PsExec('DESKTOP-P01', 'testadmin', 'passtestadmin')
+    # local.run_remote_cmd('cmd')
+    # os.system('pause')
 
     logger_info.info('Initialisation des salles :')
     init_salles()
@@ -128,12 +137,12 @@ def main():
             # contrôle l'augmentation de la mémoire pour le multithread
             gc.collect()
             # print('com-ref: ', pythoncom._GetInterfaceCount())
-            print('-'*(os.get_terminal_size().columns-1))
+            print('-' * (os.get_terminal_size().columns - 1))
         except Warning:
             cmd_funct(['help'])
             gc.collect()
             # print(pythoncom._GetInterfaceCount())
-            print('-'*(os.get_terminal_size().columns-1))
+            print('-' * (os.get_terminal_size().columns - 1))
 
 if __name__ == '__main__':
     main()

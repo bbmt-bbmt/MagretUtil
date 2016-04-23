@@ -1,14 +1,12 @@
 #! python3
 # coding: utf-8
 
-# todo:
-# la fonction exec est un mot clé python il faut changer le nom
-
 import re
 import docopt2
 import gc
 from var_global import *
 import os
+import subprocess
 from Groupe import Groupe
 from colorama import Fore
 
@@ -73,7 +71,7 @@ Usage:
     if selected_groupes == []:
         print('Auncun groupe sélectionné')
     else:
-        print('-'*(os.get_terminal_size().columns-1))
+        print('-' * (os.get_terminal_size().columns-1))
         print("\n".join([m.str_groupe() for m in selected_groupes]).strip())
     return
 
@@ -137,7 +135,7 @@ Usage:
             str_resultat += groupe.str_user_groups(arg['<name>'])
 
     if str_resultat != '':
-        print('-'*(os.get_terminal_size().columns-1))
+        print('-' * (os.get_terminal_size().columns - 1))
         print(str_resultat.strip())
     else:
         selected([])
@@ -191,8 +189,8 @@ Options:
     if arg['result']:
         if arg['<machine>'] in machines_dict.keys():
             str_resultat = machines_dict[arg['<machine>']].last_output_cmd \
-                            if machines_dict[arg['<machine>']].last_output_cmd != "" \
-                            else "Aucun resultat à afficher"
+                if machines_dict[arg['<machine>']].last_output_cmd != "" \
+                else "Aucun resultat à afficher"
             print(str_resultat.strip())
         else:
             print("%s n'existe pas" % arg['<machine>'])
@@ -337,6 +335,32 @@ Usage:
     return
 
 
+class VncViewer:
+    _vnc = {}
+
+    def __init__(self):
+        raise Exception("Cette classe ne doit pas être instancié")
+        return
+
+    @staticmethod
+    def open():
+        VncViewer.close()
+        VncViewer._vnc['viewer_process'] = subprocess.Popen(['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
+        return
+
+    @staticmethod
+    def close():
+        try:
+            VncViewer._vnc['viewer_process'].kill()
+            VncViewer._vnc['viewer_process'] = None
+            VncViewer._vnc = {}
+        except (KeyError, AttributeError):
+            pass
+        finally:
+            subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        return
+
+
 def vnc(param):
     """Lance une session vnc sur la machine donnée
 
@@ -353,12 +377,15 @@ Usage:
         return
     if arg['open']:
         try:
+            VncViewer.open()
             machines_dict[arg['<machine>']].vnc_open()
         except KeyError:
             print("La machine n'existe pas")
+            VncViewer.close()
             return
     if arg['close']:
         try:
+            VncViewer.close()
             machines_dict[arg['<machine>']].vnc_close()
         except KeyError:
             print("La machine n'existe pas")

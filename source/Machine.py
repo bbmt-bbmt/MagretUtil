@@ -134,7 +134,7 @@ class Machine:
         return
 
     def vnc_clean_process(self):
-        subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        # subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         subprocess.call(['taskkill', "/F", "/S", self.name, "/IM", "winvnc.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         return
 
@@ -147,7 +147,7 @@ class Machine:
             self._vnc['uid'] = _psexec._get_uid()
             remote_directory = os.path.join(_psexec.remote_path, self._vnc['uid'])
             vnc_file = ['vnc\\winvnc.exe', 'vnc\\UltraVNC.ini', 'vnc\\vnchooks.dll']
-            self._vnc['viewer_process'] = subprocess.Popen(['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
+            # self._vnc['viewer_process'] = subprocess.Popen(['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
 
             for file in vnc_file:
                 _psexec._net_copy(file, remote_directory)
@@ -178,7 +178,7 @@ class Machine:
             return
         if self._vnc:
             try:
-                self._vnc['viewer_process'].kill()
+                # self._vnc['viewer_process'].kill()
                 _psexec = Psexec.PsExec(self.name, REMOTE_PATH)
                 remote_directory = os.path.join(_psexec.remote_path, self._vnc['uid'])
                 cmd = os.path.join(remote_directory, 'winvnc.exe -kill')
@@ -199,7 +199,7 @@ class Machine:
                 _psexec._release_uid(self._vnc['uid'])
                 self._vnc = {}
                 _psexec = None
-        self.vnc_clean_process()
+        subprocess.call(['taskkill', "/F", "/S", self.name, "/IM", "winvnc.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         return
 
     def put(self, file_path, dir_path):

@@ -14,3 +14,4 @@ def fix_str(string):
 groupes = []
 machines_dict = {}
 selected_groupes = []
+domaine = {}
