@@ -372,8 +372,9 @@ def vnc(param):
 
 Usage:
   vnc help
-  vnc open <machine>
   vnc close <machine>
+  vnc <machine>
+  
 """
     global groupes, selected_groupes, machines_dict
     doc = vnc.__doc__
@@ -381,14 +382,6 @@ Usage:
     if arg['help']:
         print(doc)
         return
-    if arg['open']:
-        try:
-            VncViewer.open()
-            machines_dict[arg['<machine>']].vnc_open()
-        except KeyError:
-            print("La machine n'existe pas")
-            VncViewer.close()
-            return
     if arg['close']:
         try:
             VncViewer.close()
@@ -396,6 +389,15 @@ Usage:
         except KeyError:
             print("La machine n'existe pas")
             return
+    else:
+        if arg['<machine>']:
+            try:
+                VncViewer.open()
+                machines_dict[arg['<machine>']].vnc_open()
+            except KeyError:
+                print("La machine n'existe pas")
+                VncViewer.close()
+                return
     selected([])
     return
 
