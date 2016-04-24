@@ -133,11 +133,6 @@ class Machine:
             _psexec = None
         return
 
-    def vnc_clean_process(self):
-        # subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        subprocess.call(['taskkill', "/F", "/S", self.name, "/IM", "winvnc.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        return
-
     def vnc_open(self):
         if self.etat == ETEINT:
             return
@@ -169,6 +164,8 @@ class Machine:
             if w.com_error is not None:
                 self.message_erreur += fix_str(w.com_error.strerror)
             # logger.error(self.name + ": " + str(w))
+        except FileNotFoundError as f:
+            self.message_erreur += "Le fichier %s n'existe pas" % f.filename
         finally:
             _psexec = None
         return
