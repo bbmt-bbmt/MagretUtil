@@ -13,7 +13,6 @@ from Groupe import Groupe
 from colorama import Fore
 
 
-
 def select(param):
     """Sélectionne les groupes, utiliser * pour tout selectionner
 En utilisant select reg il est possible d'utiliser une expression régulière
@@ -34,8 +33,11 @@ Usage:
     if arg['reg']:
         pattern = re.compile(arg['<expression_reg>'])
         selected_groupes = [g for g in groupes if pattern.fullmatch(g.name)]
-        selected_machines_groupes = [m.name for g in selected_groupes for m in g]
-        selected_machines = [name for name in machines_dict if pattern.fullmatch(name) and name not in selected_machines_groupes]
+        selected_machines_groupes = [m.name for g in selected_groupes
+                                     for m in g]
+        selected_machines = [name for name in machines_dict
+                             if pattern.fullmatch(name) and
+                             name not in selected_machines_groupes]
         if selected_machines:
             selected_groupes.append(Groupe('AUTRES', selected_machines))
     if arg['<nom>']:
@@ -48,7 +50,9 @@ Usage:
             selected_machines_groupes = [m.name for g in selected_groupes for m in g]
             # on sélectionne les machines de la commande select sauf si elles
             # existent déja dans un groupe
-            selected_machines = [name for name in machines_dict if name in arg['<nom>'] and name not in selected_machines_groupes]
+            selected_machines = [name for name in machines_dict
+                                 if name in arg['<nom>'] and
+                                 name not in selected_machines_groupes]
             # si la liste des machines à sélectionner n'est pas vide
             # on crée le groupe AUTRES
             if selected_machines:
@@ -95,7 +99,8 @@ Usage:
     for groupe in selected_groupes:
         machines_dict.clear()
         groupe.update()
-        machines_dict.update({machine.name: machine for s in groupes for machine in s})
+        machines_dict.update({machine.name: machine for s in groupes
+                              for machine in s})
         gc.collect()
     selected([])
     return
@@ -126,7 +131,8 @@ Usage:
 
     for groupe in selected_groupes:
         if arg['add']:
-            groupes = ['Administrateurs'] if arg['<admin>'] == 'admin' else ['Utilisateurs']
+            groupes = ['Administrateurs'] if arg['<admin>'] == 'admin'\
+                else ['Utilisateurs']
             groupe.add_user(arg['<name>'], arg['<password>'], groupes)
         if arg['del']:
             groupe.del_user(arg['<name>'])
@@ -180,14 +186,18 @@ Options:
     except:
         timeout = None
     if arg['cmd']:
-        list_join = [arg['<commande>']] + arg['<parametre>'] + [arg['--param'].strip('"')]
+        list_join = [arg['<commande>']]\
+            + arg['<parametre>'] + [arg['--param'].strip('"')]
         cmd = ' '.join(list_join)
         for groupe in selected_groupes:
             groupe.run_remote_cmd(cmd, timeout, arg["--no-wait"])
         selected([])
     if arg['file']:
         for groupe in selected_groupes:
-            groupe.run_remote_file(arg['<nom_fichier>'], " ".join(arg['<option>'] + [arg['--param'].strip('"')]), timeout, arg["--no-wait"])
+            groupe.run_remote_file(arg['<nom_fichier>'],
+                                   " ".join(arg['<option>'] + [arg['--param'].strip('"')]),
+                                   timeout,
+                                   arg["--no-wait"])
         selected([])
     if arg['result']:
         if arg['<machine>'] in machines_dict.keys():
@@ -229,7 +239,8 @@ Options:
     except KeyError:
         print("la machine n'existe pas")
         return
-    str_resultat += "\n".join([groupe.str_cmp(str_ref, int(arg['--seuil'])) for groupe in selected_groupes])
+    str_resultat += "\n".join([groupe.str_cmp(str_ref, int(arg['--seuil']))
+                               for groupe in selected_groupes])
     print(str_resultat)
     return
 
@@ -349,7 +360,8 @@ class VncViewer:
     def open():
         VncViewer.close()
         try:
-            VncViewer._vnc['viewer_process'] = subprocess.Popen(['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
+            VncViewer._vnc['viewer_process'] = subprocess.Popen(
+                ['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
         except FileNotFoundError:
             print("vncviewer n'existe pas")
         return
@@ -363,7 +375,8 @@ class VncViewer:
         except (KeyError, AttributeError):
             pass
         finally:
-            subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+            subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"],
+                            stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         return
 
 
@@ -374,7 +387,7 @@ Usage:
   vnc help
   vnc close <machine>
   vnc <machine>
-  
+
 """
     global groupes, selected_groupes, machines_dict
     doc = vnc.__doc__
@@ -414,6 +427,7 @@ Commandes :
   cmp: compare les résultats d'une commande run
   errors: affiche les erreurs des machines en rouge
   put: envoie un fichier dans un repertoire de destination sur les machines
+  password: demande le mot de passe pour élever ses privilèges
   flush: écrit un fichier csv contenant les résultats de la dernière commande
   wol: allume les machines selectionnées
         (un dossier mac doit être crée pour stocker les adresses mac)
@@ -468,7 +482,7 @@ L'option uac sert à passer le contrôle uac
 
 Usage:
   password help
-  password [uac] 
+  password [uac]
 
 """
     global domaine
@@ -476,7 +490,7 @@ Usage:
     if not domaine or domaine['login'] is None:
         print("Aucun domaine et login dans le fichier conf.ini")
         return
-    
+
     arg = docopt2.docopt(doc, argv=param, help=False)
     user_pass = getpass.getpass('mot de passe pour le compte %s: ' % domaine['login'])
     uac = arg['uac']
@@ -484,7 +498,9 @@ Usage:
         Privilege.get_privilege(domaine['login'], user_pass, domaine['name'], uac)
         raise SystemExit()
     except OSError as o:
-        str_resultat = Fore.LIGHTRED_EX + "Erreur lors de l'élevation de privilège: " + fix_str(o.strerror) + Fore.RESET
+        str_resultat = Fore.LIGHTRED_EX\
+            + "Erreur lors de l'élevation de privilège: "\
+            + fix_str(o.strerror) + Fore.RESET
         print(str_resultat)
     return
 
@@ -492,7 +508,8 @@ Usage:
 def quit(param):
     global groupes, selected_groupes, machines_dict
 
-    # pour être sur que le garbage collector nettoie bien tout ceux qui a été laissé par les thread
+    # pour être sur que le garbage collector nettoie bien tout ceux
+    # qui a été laissé par les thread
     groupes.clear()
     selected_groupes.clear()
     machines_dict.clear()

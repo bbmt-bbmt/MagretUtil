@@ -138,4 +138,3 @@ ctypes.byref(lpProcessInformation))
        raise ctypes.WinError()
    return lpProcessInformation
 
-#CreateProcessWithLogonW('testadmin',None,'passtestadmin',0,'C:\\Windows\\system32\\cmd.exe','cmd.exe')

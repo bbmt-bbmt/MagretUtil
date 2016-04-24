@@ -23,7 +23,7 @@ ETEINT = 0
 
 
 def score_str(str1, str2):
-    score = difflib.SequenceMatcher(None, str1, str2).ratio()*100
+    score = difflib.SequenceMatcher(None, str1, str2).ratio() * 100
     return score
 
 

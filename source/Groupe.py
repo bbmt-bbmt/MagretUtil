@@ -24,7 +24,7 @@ ETEINT = 0
 
 
 def score_str(str1, str2):
-    score = difflib.SequenceMatcher(None, str1, str2).ratio()*100
+    score = difflib.SequenceMatcher(None, str1, str2).ratio() * 100
     return score
 
 
@@ -54,7 +54,8 @@ class Groupe:
         les paramètre *param"""
         result = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            future_to_machine = [executor.submit(callback, p, **kwargs) for p in param]
+            future_to_machine = [executor.submit(callback, p, **kwargs)
+                                 for p in param]
             for futur in concurrent.futures.as_completed(future_to_machine):
                 if futur.exception() is not None:
                     raise futur.exception()
@@ -72,7 +73,8 @@ class Groupe:
                 pythoncom.CoUninitialize()
             return
 
-        self._run_threads(add_user_thread, *self.machines, nom=login, password=password, groupes=groupes)
+        self._run_threads(add_user_thread, *self.machines, nom=login,
+                          password=password, groupes=groupes)
 
         logger_info.info("%s OK" % self.name)
         return
@@ -101,7 +103,8 @@ class Groupe:
                 pythoncom.CoUninitialize()
             return
 
-        self._run_threads(chpwd_user_thread, *self.machines, login=login, password=password)
+        self._run_threads(chpwd_user_thread, *self.machines, login=login,
+                          password=password)
         logger_info.info("%s OK" % self.name)
         return
 
@@ -121,7 +124,8 @@ class Groupe:
             pythoncom.CoUninitialize()
             return
 
-        self._run_threads(machine_remote_cmd_thread, *self.machines, cmd=cmd, timeout=timeout, no_wait_output=no_wait_output)
+        self._run_threads(machine_remote_cmd_thread, *self.machines, cmd=cmd,
+                          timeout=timeout, no_wait_output=no_wait_output)
         logger_info.info("%s OK" % self.name)
         return
 
@@ -130,12 +134,15 @@ class Groupe:
             pythoncom.CoInitialize()
             try:
                 if machine.etat == ALLUME:
-                    machine.run_remote_file(file, param, timeout, no_wait_output)
+                    machine.run_remote_file(file, param, timeout,
+                                            no_wait_output)
             finally:
                 pythoncom.CoUninitialize()
             return
 
-        self._run_threads(machine_remote_file_thread, *self.machines, file=file, param=param, timeout=timeout, no_wait_output=no_wait_output)
+        self._run_threads(machine_remote_file_thread, *self.machines,
+                          file=file, param=param, timeout=timeout,
+                          no_wait_output=no_wait_output)
         logger_info.info("%s OK" % self.name)
         return
 
@@ -149,7 +156,8 @@ class Groupe:
                 pythoncom.CoUninitialize()
             return
 
-        self._run_threads(machine_put_thread, *self.machines, file_path=file_path, dir_path=dir_path)
+        self._run_threads(machine_put_thread, *self.machines,
+                          file_path=file_path, dir_path=dir_path)
         logger_info.info("%s OK" % self.name)
 
     def clean(self):
@@ -198,7 +206,8 @@ class Groupe:
         resultat = ''
 
         for machine in self.machines:
-            # on coupe la sortie en fonction du nombre de colonne et on ne compte pas les caractère spéciaux
+            # on coupe la sortie en fonction du nombre de colonne
+            # et on ne compte pas les caractère spéciaux
             if len(re.sub('\x1b.*?m', '', resultat)) + len(machine.name) >= columns_term:
                 lignes.append(resultat.strip())
                 resultat = ''
@@ -224,9 +233,10 @@ fonction du nombre de colonne de la console """
         max_len = len(max([re.sub('\x1b.*?m', '', s) for s in liste_str], key=len))
         # nbre_col-> compte combien de sortie on va mettre sur une meme ligne
         # avec un espacement minimum de 4
-        nbre_col = columns_term // (max_len+4)
+        nbre_col = columns_term // (max_len + 4)
         # on decooupe, chaque element de sous_liste_str correspond à une ligne
-        sous_listes_str = [liste_str[i:i + nbre_col] for i in range(0, len(liste_str), nbre_col)]
+        sous_listes_str = [liste_str[i:i + nbre_col]
+                           for i in range(0, len(liste_str), nbre_col)]
         str_template = "{:<%i}" % max_len
         for liste in sous_listes_str:
             str_resultat += "    ".join([str_template.format(s) for s in liste]) + '\n'
@@ -235,12 +245,10 @@ fonction du nombre de colonne de la console """
     def str_users(self):
         def str_users_thread(machine):
             pythoncom.CoInitialize()
-            # print('avant thread',pythoncom._GetInterfaceCount())
             try:
                 str_resultat = machine.str_users()
             finally:
                 pythoncom.CoUninitialize()
-            # print('apres thread',pythoncom._GetInterfaceCount())
             return str_resultat
 
         str_resultat = ""
@@ -276,7 +284,8 @@ fonction du nombre de colonne de la console """
         str_resultat = Fore.LIGHTCYAN_EX + self.name + Fore.RESET + '\n'
         for machine in self.machines:
             if machine.message_erreur != '':
-                str_resultat += Fore.LIGHTRED_EX + machine.name + ': ' + Fore.RESET + machine.message_erreur + '\n'
+                str_resultat += Fore.LIGHTRED_EX + machine.name + ': '\
+                    + Fore.RESET + machine.message_erreur + '\n'
         return str_resultat
 
     def str_cmp(self, str_ref, seuil):

@@ -11,8 +11,6 @@ import traceback
 import getpass
 
 
-
-
 from logging import FileHandler
 import colorama
 colorama.init()
@@ -95,9 +93,8 @@ def erreur_final(e_type, e_value, e_tb):
 
 
 def init_groupes(ini_groupes):
-    global groupes, selected_groupes, machines_dict, domaine
+    global groupes, selected_groupes, machines_dict
 
-    # ini_groupes, dom = lire_fichier_ini('conf.ini')
     for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
         groupes.append(Salle(ini_salle, nbre))
     for ini_groupe, list_machine in ini_groupes['Groupes'].items():
@@ -106,25 +103,28 @@ def init_groupes(ini_groupes):
     groupes.sort(key=lambda x: x.name)
 
     machines_dict.update({machine.name: machine for g in groupes for machine in g})
-    # domaine.update(dom)
     return
 
 
 def main():
     global domaine
-    #sys.excepthook = erreur_final
-    #print(sys.argv)
+    sys.excepthook = erreur_final
 
     ini_groupes, dom = lire_fichier_ini('conf.ini')
+    # on initialise la variable domaine qui contient le login administrateur
+    # du domaine
     domaine.update(dom)
 
+    # Si le login du fichier config est différent que celui avec lequel
+    # on est connecté, on lance la procédure délévation de privilège
     if domaine['login'] is not None and getpass.getuser() != domaine['login']:
         commandes.password(['uac'])
 
+    # Si une demande de bypasser l'uac est demandé, on lance la procédure
     if sys.argv[1:] and sys.argv[1] == "pass_uac":
         Privilege.pass_uac()
         raise SystemExit()
-        
+
     logger_info.info('Initialisation des salles :')
     init_groupes(ini_groupes)
 

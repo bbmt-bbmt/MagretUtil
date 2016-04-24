@@ -12,7 +12,6 @@ import os
 import subprocess
 # import logging
 import Psexec
-# import pythoncom
 
 from colorama import Fore
 
@@ -79,7 +78,8 @@ class Machine:
 
     def shutdown(self):
         if self.etat == ALLUME:
-            subprocess.call(["shutdown", "/m", '\\\\' + self.name, "/s", "/f", "/t", "0"], stderr=subprocess.DEVNULL)
+            subprocess.call(["shutdown", "/m", '\\\\' + self.name, "/s", "/f", "/t", "0"],
+                            stderr=subprocess.DEVNULL)
             self.etat = ETEINT
         return
 
@@ -89,7 +89,9 @@ class Machine:
         try:
             _psexec = Psexec.PsExec(self.name, REMOTE_PATH)
 
-            result, output_data = _psexec.run_remote_cmd(cmd, timeout, no_wait_output)
+            result, output_data = _psexec.run_remote_cmd(cmd,
+                                                         timeout,
+                                                         no_wait_output)
             if result == 0:
                 self.last_output_cmd = output_data
             else:
@@ -112,7 +114,8 @@ class Machine:
         Utilise PsExec """
         try:
             _psexec = Psexec.PsExec(self.name, REMOTE_PATH)
-            result, output_data = _psexec.run_remote_file(file, param, timeout, no_wait_output)
+            result, output_data = _psexec.run_remote_file(file, param, timeout,
+                                                          no_wait_output)
             if result == 0:
                 self.last_output_cmd = output_data
             else:
@@ -142,20 +145,22 @@ class Machine:
             self._vnc['uid'] = _psexec._get_uid()
             remote_directory = os.path.join(_psexec.remote_path, self._vnc['uid'])
             vnc_file = ['vnc\\winvnc.exe', 'vnc\\UltraVNC.ini', 'vnc\\vnchooks.dll']
-            # self._vnc['viewer_process'] = subprocess.Popen(['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
 
             for file in vnc_file:
                 _psexec._net_copy(file, remote_directory)
 
-            cmd1 = os.path.join(remote_directory, 'winvnc.exe -kill')
-            cmd2 = os.path.join(remote_directory, 'winvnc.exe')
-            cmd3 = os.path.join(remote_directory, 'winvnc.exe -connect ' + self.name)
+            cmd_kill = os.path.join(remote_directory, 'winvnc.exe -kill')
+            cmd_run = os.path.join(remote_directory, 'winvnc.exe')
+            cmd_connect = os.path.join(remote_directory,
+                                       'winvnc.exe -connect ' + self.name)
 
             SW_SHOWMINIMIZED = 0
             startup = _psexec.connection.Win32_ProcessStartup.new(ShowWindow=SW_SHOWMINIMIZED)
-            _psexec.connection.Win32_Process.Create(CommandLine=cmd1, ProcessStartupInformation=startup)
-            self._vnc['server_pid'], return_value = _psexec.connection.Win32_Process.Create(CommandLine=cmd2, ProcessStartupInformation=startup)
-            _psexec.connection.Win32_Process.Create(CommandLine=cmd3, ProcessStartupInformation=startup)
+            _psexec.connection.Win32_Process.Create(CommandLine=cmd_kill,
+                                                    ProcessStartupInformation=startup)
+            self._vnc['server_pid'], return_value = _psexec.connection.Win32_Process.Create(CommandLine=cmd_run, ProcessStartupInformation=startup)
+            _psexec.connection.Win32_Process.Create(CommandLine=cmd_connect,
+                                                    ProcessStartupInformation=startup)
         except PermissionError:
             self.message_erreur += "Vous n'avez pas les droits administrateur\n"
             # logger.error(self.name + ": " + str(p))
@@ -175,13 +180,13 @@ class Machine:
             return
         if self._vnc:
             try:
-                # self._vnc['viewer_process'].kill()
                 _psexec = Psexec.PsExec(self.name, REMOTE_PATH)
                 remote_directory = os.path.join(_psexec.remote_path, self._vnc['uid'])
                 cmd = os.path.join(remote_directory, 'winvnc.exe -kill')
                 SW_SHOWMINIMIZED = 0
                 startup = _psexec.connection.Win32_ProcessStartup.new(ShowWindow=SW_SHOWMINIMIZED)
-                _psexec.connection.Win32_Process.Create(CommandLine=cmd, ProcessStartupInformation=startup)
+                _psexec.connection.Win32_Process.Create(CommandLine=cmd,
+                                                        ProcessStartupInformation=startup)
                 _psexec._watcher_process_del(self._vnc['server_pid'])
                 _psexec.run_remote_cmd('rd /s /q %s' % remote_directory)
             except PermissionError:
@@ -196,7 +201,8 @@ class Machine:
                 _psexec._release_uid(self._vnc['uid'])
                 self._vnc = {}
                 _psexec = None
-        subprocess.call(['taskkill', "/F", "/S", self.name, "/IM", "winvnc.exe"], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.call(['taskkill', "/F", "/S", self.name, "/IM", "winvnc.exe"],
+                        stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         return
 
     def put(self, file_path, dir_path):
@@ -213,14 +219,16 @@ class Machine:
 
     def ping(self):
         try:
-            result_ping = subprocess.check_output(["ping", "-n", " 1", "-w", " 1000", "-4", self.name], stderr=subprocess.DEVNULL)
+            result_ping = subprocess.check_output(["ping", "-n", " 1", "-w", " 1000", "-4", self.name],
+                                                  stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError:
             self.etat = ETEINT
             return
         self.etat = ALLUME
         result_ping = result_ping.decode('cp850', errors='ignore')
         try:
-            match = re.search(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}', result_ping)
+            match = re.search(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}',
+                              result_ping)
             self.ip = match.group(0)
         except IndexError:
             self.message_erreur += "erreur lors de la récupération de l'ip\n"
@@ -239,7 +247,7 @@ class Machine:
                 # si l'adresse mac est trouvé on l'écrit dans un fichier
                 # si le fichier n'existe pas
                 if self.mac is not None:
-                    path = os.path.join('mac', self.name+'.txt')
+                    path = os.path.join('mac', self.name + '.txt')
                     if os.path.isdir('mac') and not os.path.isfile(path):
                         with open(path, 'w') as f:
                             f.write(self.mac)
@@ -252,7 +260,7 @@ class Machine:
             try:
                 # si le fichier qui stocke l'adresse mac existe,
                 # on tente de le récupérer
-                with open('mac\\' + self.name+'.txt', 'r') as f:
+                with open('mac\\' + self.name + '.txt', 'r') as f:
                     self.mac = f.readline().strip('\n')
                     return
             except FileNotFoundError:
@@ -271,13 +279,14 @@ efface les erreurs, met à jour l'état, l'ip """
     def lister_users(self):
         """liste les utilisateurs et retourne un tableau {nom_user:état}
         état peut être degraded ou ok suivant que le compte est activé ou non """
-        decalage = len(self.name)+1
+        decalage = len(self.name) + 1
         users = []
         if self.etat == ALLUME:
             try:
                 wmi = WmiModule.WMI(self.name)
                 wmi_UserAccount = wmi.Win32_UserAccount(LocalAccount=True)
-                users = [{user.Caption[decalage:]:user.status} for user in wmi_UserAccount]
+                users = [{user.Caption[decalage:]:user.status}
+                         for user in wmi_UserAccount]
             except WmiModule.x_wmi as w:
                 self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
                 if w.com_error is not None:
@@ -288,13 +297,14 @@ efface les erreurs, met à jour l'état, l'ip """
     def groupes_user(self, user):
         """retourne un dict contenant la liste des groupes de user """
         groupes = []
-        decalage = len(self.name)+1
+        decalage = len(self.name) + 1
         if self.etat == ALLUME:
             try:
                 wmi = WmiModule.WMI(self.name)
                 wmi_UserAccount = wmi.Win32_UserAccount(Name=user, LocalAccount=True)
                 if wmi_UserAccount:
-                    groupes = [groupe.Caption[decalage:] for groupe in wmi_UserAccount[0].associators("Win32_GroupUser")]
+                    groupes = [groupe.Caption[decalage:]
+                               for groupe in wmi_UserAccount[0].associators("Win32_GroupUser")]
             except WmiModule.x_wmi as w:
                 self.message_erreur += "erreur wmi: %s \n" % w.info
                 if w.com_error is not None:
@@ -312,7 +322,8 @@ efface les erreurs, met à jour l'état, l'ip """
         try:
             win32net.NetUserAdd(self.name, 1, parametre_user)
         except pywintypes.error as error:
-            log_erreur = "Erreur lors de la création du compte " + login + " : " + fix_str(error.strerror)
+            log_erreur = "Erreur lors de la création du compte "\
+                         + login + " : " + fix_str(error.strerror)
             self.message_erreur += log_erreur + "\n"
             # logger.error(log_erreur)
 
@@ -320,7 +331,8 @@ efface les erreurs, met à jour l'état, l'ip """
             try:
                 win32net.NetLocalGroupAddMembers(self.name, groupe, 3, [{'domainandname': login}])
             except pywintypes.error as error:
-                log_erreur = "Erreur lors de l'attribution du groupe " + groupe + " : " + fix_str(error.strerror)
+                log_erreur = "Erreur lors de l'attribution du groupe "\
+                             + groupe + " : " + fix_str(error.strerror)
                 self.message_erreur += log_erreur + "\n"
                 # logger.error(self.name + ": " + log_erreur)
         return
@@ -330,7 +342,8 @@ efface les erreurs, met à jour l'état, l'ip """
         try:
             win32net.NetUserDel(self.name, login)
         except pywintypes.error as error:
-            log_erreur = "Erreur lors de la suppression de l'utilisateur " + login + " : " + fix_str(error.strerror)
+            log_erreur = "Erreur lors de la suppression de l'utilisateur "\
+                         + login + " : " + fix_str(error.strerror)
             self.message_erreur += log_erreur + "\n"
             # logger.error(self.name + ": " + log_erreur)
         return
@@ -343,7 +356,8 @@ efface les erreurs, met à jour l'état, l'ip """
             win32net.NetUserSetInfo(self.name, login, 3, info)
             info = win32net.NetUserGetInfo(self.name, login, 3)
         except pywintypes.error as error:
-            log_erreur = "Erreur lors du changement de password de l'utilisateur " + login + " : " + fix_str(error.strerror)
+            log_erreur = "Erreur lors du changement de password de l'utilisateur "\
+                         + login + " : " + fix_str(error.strerror)
             self.message_erreur += log_erreur + "\n"
             # logger.error(self.name + ": " + log_erreur)
         return
