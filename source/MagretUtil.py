@@ -2,11 +2,16 @@
 # coding: utf-8
 
 import os
+import sys
 import configparser
 import logging
 import re
 import gc
 import traceback
+import getpass
+
+
+
 
 from logging import FileHandler
 import colorama
@@ -32,7 +37,7 @@ from Groupe import Groupe
 from Salle import Salle
 import commandes
 from var_global import *
-from Psexec import PsExec
+import Privilege
 
 
 def _protect_quotes(text):
@@ -70,16 +75,15 @@ def lire_fichier_ini(fichier):
 
         for groupe in config['Groupes']:
             groupes_dict['Groupes'][groupe.upper()] = config['Groupes'][groupe]
-
-        domaine['name'] = config['Domaine']['domaine']
-        domaine['login'] = config['Domaine']['login']
-
     except ValueError:
         pass
     except Exception as e:
         print('Erreur de lecture du fichier config')
         logger.critical(e)
         raise SystemExit()
+
+    domaine['name'] = config.get('Domaine', 'domaine', fallback=None)
+    domaine['login'] = config.get('Domaine', 'login', fallback=None)
     return groupes_dict, domaine
 
 
@@ -90,10 +94,10 @@ def erreur_final(e_type, e_value, e_tb):
     return
 
 
-def init_salles():
+def init_groupes(ini_groupes):
     global groupes, selected_groupes, machines_dict, domaine
 
-    ini_groupes, dom = lire_fichier_ini('conf.ini')
+    # ini_groupes, dom = lire_fichier_ini('conf.ini')
     for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
         groupes.append(Salle(ini_salle, nbre))
     for ini_groupe, list_machine in ini_groupes['Groupes'].items():
@@ -102,18 +106,27 @@ def init_salles():
     groupes.sort(key=lambda x: x.name)
 
     machines_dict.update({machine.name: machine for g in groupes for machine in g})
-    domaine.update(dom)
+    # domaine.update(dom)
     return
 
 
 def main():
-    # sys.excepthook = erreur_final
-    # local = PsExec('DESKTOP-P01', 'testadmin', 'passtestadmin')
-    # local.run_remote_cmd('cmd')
-    # os.system('pause')
+    global domaine
+    #sys.excepthook = erreur_final
+    #print(sys.argv)
 
+    ini_groupes, dom = lire_fichier_ini('conf.ini')
+    domaine.update(dom)
+
+    if domaine['login'] is not None and getpass.getuser() != domaine['login']:
+        commandes.password(['uac'])
+
+    if sys.argv[1:] and sys.argv[1] == "pass_uac":
+        Privilege.pass_uac()
+        raise SystemExit()
+        
     logger_info.info('Initialisation des salles :')
-    init_salles()
+    init_groupes(ini_groupes)
 
     # efface l'écran
     print('\x1b[2J', end='')

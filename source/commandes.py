@@ -3,12 +3,15 @@
 
 import re
 import docopt2
+import Privilege
 import gc
 from var_global import *
 import os
 import subprocess
+import getpass
 from Groupe import Groupe
 from colorama import Fore
+
 
 
 def select(param):
@@ -71,7 +74,7 @@ Usage:
     if selected_groupes == []:
         print('Auncun groupe sélectionné')
     else:
-        print('-' * (os.get_terminal_size().columns-1))
+        print('-' * (os.get_terminal_size().columns - 1))
         print("\n".join([m.str_groupe() for m in selected_groupes]).strip())
     return
 
@@ -345,7 +348,10 @@ class VncViewer:
     @staticmethod
     def open():
         VncViewer.close()
-        VncViewer._vnc['viewer_process'] = subprocess.Popen(['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
+        try:
+            VncViewer._vnc['viewer_process'] = subprocess.Popen(['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
+        except FileNotFoundError:
+            print("vncviewer n'existe pas")
         return
 
     @staticmethod
@@ -390,6 +396,7 @@ Usage:
         except KeyError:
             print("La machine n'existe pas")
             return
+    selected([])
     return
 
 
@@ -434,7 +441,7 @@ Usage:
         return
     if arg['clear']:
         for groupe in selected_groupes:
-            for machine in salle:
+            for machine in groupe:
                 machine.message_erreur = ''
         selected([])
         return
@@ -444,11 +451,39 @@ Usage:
     else:
         try:
             str_resultat = Fore.LIGHTRED_EX + arg['<machine>'] + ': ' +\
-                           Fore.RESET + '\n' +\
-                           machines_dict[arg['<machine>']].message_erreur
-        except Exception:
+                Fore.RESET + '\n' +\
+                machines_dict[arg['<machine>']].message_erreur
+        except KeyError:
             str_resultat = "Le poste n'existe pas"
     print(str_resultat.strip())
+    return
+
+
+def password(param):
+    """Demande le mot de passe du compte mis dans le fichier conf.ini
+et élève les privilèges de l'application avec ce compte
+L'option uac sert à passer le contrôle uac
+
+Usage:
+  password help
+  password [uac] 
+
+"""
+    global domaine
+    doc = password.__doc__
+    if not domaine or domaine['login'] is None:
+        print("Aucun domaine et login dans le fichier conf.ini")
+        return
+    
+    arg = docopt2.docopt(doc, argv=param, help=False)
+    user_pass = getpass.getpass('mot de passe pour le compte %s: ' % domaine['login'])
+    uac = arg['uac']
+    try:
+        Privilege.get_privilege(domaine['login'], user_pass, domaine['name'], uac)
+        raise SystemExit()
+    except OSError as o:
+        str_resultat = Fore.LIGHTRED_EX + "Erreur lors de l'élevation de privilège: " + fix_str(o.strerror) + Fore.RESET
+        print(str_resultat)
     return
 
 
