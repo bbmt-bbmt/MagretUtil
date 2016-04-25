@@ -3,7 +3,12 @@ psexec like utilisant wmi pour réseaux Magret.
 
 Le logiciel est multithreadé par salle.
 
+Toutes les versions : [release](https://github.com/bbmt-bbmt/MagretUtil/releases)
+
 Lien pour télécharger la dernière version : [zip-file](https://github.com/bbmt-bbmt/MagretUtil/releases/download/0.1/MagretUtil-v0.1.zip)
+
+Lien pour télécharger la prochaine version (version bêta) : [zip-file](https://github.com/bbmt-bbmt/MagretUtil/releases/download/0.2/MagretUtil-v0.2.zip)
+
 
 # liste des commandes disponible
 pour afficher l'aide d'une commande
