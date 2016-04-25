@@ -1,4 +1,4 @@
---/--/---- MagretUtil v0.2
+25/04/2016 MagretUtil v0.2
 1.suppression de l'option * dans wol shutdown et errors (inutile)
   On tape la commande sans argument
 2.Modification du shutdown pour ne pas utiliser psexec mais la commande shutdown.exe
