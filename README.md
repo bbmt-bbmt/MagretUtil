@@ -37,6 +37,8 @@ select reg .*(1|2)
 ## users
 Modifie les utilisateurs sur les stations sélectionnées.
 
+Le mot clé admin à la fin de la commande permet de mettre l'utilisateur dans le groupe Administrateur
+
 Ajouter un utilisateur:
 ```
 users add <name> <password> [<admin>]  
@@ -87,7 +89,7 @@ Explications des options:
 ```
 --timeout=<t>    temps pour attendre la fin de l'execution en seconde
 --no-wait        si l'option est spécifiée, on n'attend pas la réponse de la commande
---param=<param>  permet de passer des parametres avec un tirer.
+--param=<param>  permet de passer des parametres avec un tiret.
                  On peut utiliser les "" pour passer plusieurs parametres
 ```
 
@@ -118,7 +120,7 @@ flush
 Affiche ou efface les erreurs des machines affichées en rouge
 ```
 errors <machine>
-errors *
+errors
 errors clear
 ```
 
@@ -126,14 +128,14 @@ errors clear
 Allume les machines selectionnées. Un dossier mac doit être crée pour stocker les adresses mac lorsque la machine est vue pour la première fois.
 ```
 wol <machine>
-wol *
+wol
 ```
 
 ## shutdown
 Eteint les machines sélectionnées.
 ```
 shutdown <machine>
-shutdown *
+shutdown
 ```
 
 ## vnc
@@ -159,6 +161,14 @@ On selectionne toutes les salles mises dans le fichier conf.ini:
 ```
 select *
 ```
+On affiche les comptes utilisateurs des machines sélectionnées:
+```
+users show
+```
+On créé un compte administrateur sur les machines sélectionnées:
+```
+users add testadmin passtestadmin admin
+```
 On execute une commande dos:
 ```
 run cmd ipconfig|findstr /R "Passerelle"
@@ -181,6 +191,6 @@ run clean
 ```
 On affiche les erreurs éventuelles:
 ```
-errors *
+errors
 ```
 
