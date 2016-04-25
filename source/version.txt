@@ -1,0 +1,13 @@
+--/--/---- MagretUtil v0.2
+1.suppression de l'option * dans wol shutdown et errors (inutile)
+  On tape la commande sans argument
+2.Modification du shutdown pour ne pas utiliser psexec mais la commande shutdown.exe
+3.Amélioration de la commande select
+  Possibilité de chainer les noms de salle et de machine
+  Possibilité d'utiliser une expression régulière pour choisir les salles ou machines
+  Utilisation de la notion de groupe de machine plutôt que de salle
+4.Ajout d'une commande vnc permettant de lancer une session vnc sur la machine selectionnée
+5.Possibilité de se connecter avec un autre compte et d'augmenter ses privilèges
+
+11/04/2016 MagretUtil v0.1
+première publication

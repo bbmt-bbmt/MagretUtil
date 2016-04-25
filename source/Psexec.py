@@ -38,14 +38,16 @@ class PsExec:
     _filename_lock = threading.Lock()
     _filename_list = []
 
-    def __init__(self, ip, username=None, password=None, remote_path=REMOTE_PATH):
+    def __init__(self, ip, username=None, password=None,
+                 remote_path=REMOTE_PATH):
         self.ip = ip
         self.remote_path = remote_path
         self.username = username
         self.password = password
         self.connection = None
         if self.username and self.password:
-            self.connection = wmi.WMI(self.ip, user=self.username, password=self.password)
+            self.connection = wmi.WMI(self.ip, user=self.username,
+                                      password=self.password)
         else:
             self.connection = wmi.WMI(self.ip)
 
@@ -80,10 +82,11 @@ class PsExec:
 
         remote_directory = os.path.join(self.remote_path, uid)
         bat_local_path = os.path.join(pwd, uid, filename + '.bat')
-        bat_remote_path = os.path.join(remote_directory, filename+'.bat')
-        output_remote_path = os.path.join(remote_directory, filename+'.txt')
-        output_local_path = os.path.join(pwd, uid, filename+'.txt')
-        text = "cd /D " + remote_directory + "\n" + cmd + " > " + output_remote_path + " 2>&1"
+        bat_remote_path = os.path.join(remote_directory, filename + '.bat')
+        output_remote_path = os.path.join(remote_directory, filename + '.txt')
+        output_local_path = os.path.join(pwd, uid, filename + '.txt')
+        text = "cd /D " + remote_directory + "\n" + cmd + " > "\
+               + output_remote_path + " 2>&1"
         create_file(bat_local_path, text)
         self._net_copy(bat_local_path, remote_directory)
         batcmd = bat_remote_path
@@ -118,7 +121,8 @@ class PsExec:
         try:
             self._net_copy_back(output_remote_path, output_local_path)
             # cp850 encoding windows
-            output_data = open(output_local_path, 'r', errors='replace', encoding='cp850')
+            output_data = open(output_local_path, 'r', errors='replace',
+                               encoding='cp850')
             output_data = "".join(output_data.readlines())
         except FileNotFoundError:
             return_value = 1
@@ -143,7 +147,8 @@ class PsExec:
 
         self._net_copy(file_local_path, dir_remote_path)
 
-        return_value, output_data = self.run_remote_cmd(' '.join([file_remote_path, param]), timeout, no_wait_output)
+        return_value, output_data = self.run_remote_cmd(' '.join([file_remote_path, param]),
+                                                        timeout, no_wait_output)
         if no_wait_output:
             return return_value, output_data
 
@@ -163,7 +168,8 @@ class PsExec:
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
         else:
-            # crée le repertoire même si le fichier existe pour lancer une exception.
+            # crée le repertoire même si le fichier existe
+            # pour lancer une exception.
             if not os.path.isdir(dest_dir):
                 os.makedirs(dest_dir)
 
@@ -180,7 +186,8 @@ class PsExec:
         unc = ''.join(['\\\\', self.ip])
         try:
             if self.username and self.password:
-                win32wnet.WNetAddConnection2(0, None, unc, None, self.username, self.password)
+                win32wnet.WNetAddConnection2(0, None, unc, None, self.username,
+                                             self.password)
             else:
                 win32wnet.WNetAddConnection2(0, None, unc, None)
         except win32wnet.error as err:
@@ -218,7 +225,7 @@ class PsExec:
         def _call_back_return(*arg):
             list_cmd = name.split('_')
             try:
-                print(self.run_remote_cmd(" ".join(list_cmd+list(arg)))[1])
+                print(self.run_remote_cmd(" ".join(list_cmd + list(arg)))[1])
             except wmi.x_wmi as w:
                 print('erreur de requette wmi (accès, timeout ...)')
                 print(w.info)

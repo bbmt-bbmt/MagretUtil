@@ -4,13 +4,12 @@
 import os
 import logging
 # from logging.handlers import RotatingFileHandler
-import concurrent.futures
 import re
 import difflib
 import pythoncom
 from Machine import Machine
-from Machine import REMOTE_PATH
-from var_global import *
+from Groupe import Groupe
+# from var_global import *
 from colorama import Fore
 import gc
 
@@ -24,11 +23,11 @@ ETEINT = 0
 
 
 def score_str(str1, str2):
-    score = difflib.SequenceMatcher(None, str1, str2).ratio()*100
+    score = difflib.SequenceMatcher(None, str1, str2).ratio() * 100
     return score
 
 
-class Salle:
+class Salle(Groupe):
     def __init__(self, name, nbre):
 
         def init_machine_thread(nom):
@@ -39,77 +38,11 @@ class Salle:
                 pythoncom.CoUninitialize()
             return m
 
-        self.name = name
         self.nbre = nbre
-        self.machines = []
-        self.dict_machines = {}
-
         num = len(str(self.nbre)) if nbre >= 10 else 2
         str_template = '%s-P%0--i'.replace('--', str(num))
-        noms_machines = [str_template % (self.name, i) for i in range(1, nbre + 1)]
-
-        param = [name for name in noms_machines]
-        self.machines = self._run_threads(init_machine_thread, *param)
-        self.dict_machines = {machine.name: machine for machine in self.machines}
-
-        self.machines.sort(key=lambda x: x.name)
-        logger_info.info("salle %s crée" % self.name)
-        return
-
-    def _run_threads(self, callback, *param, **kwargs):
-        """fonction qui lance les threads de la fonction callback avec
-        les paramètre *param"""
-        result = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            future_to_machine = [executor.submit(callback, p, **kwargs) for p in param]
-            for futur in concurrent.futures.as_completed(future_to_machine):
-                if futur.exception() is not None:
-                    raise futur.exception()
-                result.append(futur.result())
-        return result
-
-    def add_user(self, login, password, groupes):
-        def add_user_thread(machine, nom, password, groupes):
-            # important pour initialiser les trhead windows
-            pythoncom.CoInitialize()
-            try:
-                if machine.etat == ALLUME:
-                    machine.ajouter_user(nom, password, groupes)
-            finally:
-                pythoncom.CoUninitialize()
-            return
-
-        self._run_threads(add_user_thread, *self.machines, nom=login, password=password, groupes=groupes)
-
-        logger_info.info("%s OK" % self.name)
-        return
-
-    def del_user(self, login):
-        def del_user_thread(machine, nom):
-            pythoncom.CoInitialize()
-            try:
-                if machine.etat == ALLUME:
-                    machine.supprimer_user(nom)
-            finally:
-                pythoncom.CoUninitialize()
-            return
-
-        self._run_threads(del_user_thread, *self.machines, nom=login)
-        logger_info.info("%s OK" % self.name)
-        return
-
-    def chpwd_user(self, login, password):
-        def chpwd_user_thread(machine, login, password):
-            pythoncom.CoInitialize()
-            try:
-                if machine.etat == ALLUME:
-                    machine.chpwd_user(login, password)
-            finally:
-                pythoncom.CoUninitialize()
-            return
-
-        self._run_threads(chpwd_user_thread, *self.machines, login=login, password=password)
-        logger_info.info("%s OK" % self.name)
+        noms_machines = [str_template % (name, i) for i in range(1, nbre + 1)]
+        super().__init__(name, noms_machines)
         return
 
     def update(self):
@@ -127,84 +60,7 @@ class Salle:
         self.__init__(self.name, self.nbre)
         return
 
-    def run_remote_cmd(self, cmd, timeout=None, no_wait_output=False):
-        def machine_remote_cmd_thread(machine, cmd, timeout, no_wait_output):
-            pythoncom.CoInitialize()
-            if machine.etat == ALLUME:
-                machine.run_remote_cmd(cmd, timeout, no_wait_output)
-            pythoncom.CoUninitialize()
-            return
-
-        self._run_threads(machine_remote_cmd_thread, *self.machines, cmd=cmd, timeout=timeout, no_wait_output=no_wait_output)
-        logger_info.info("%s OK" % self.name)
-        return
-
-    def run_remote_file(self, file, param, timeout, no_wait_output=False):
-        def machine_remote_file_thread(machine, file, param, timeout, no_wait_output):
-            pythoncom.CoInitialize()
-            try:
-                if machine.etat == ALLUME:
-                    machine.run_remote_file(file, param, timeout, no_wait_output)
-            finally:
-                pythoncom.CoUninitialize()
-            return
-
-        self._run_threads(machine_remote_file_thread, *self.machines, file=file, param=param, timeout=timeout, no_wait_output=no_wait_output)
-        logger_info.info("%s OK" % self.name)
-        return
-
-    def put(self, file_path, dir_path):
-        def machine_put_thread(machine, file_path, dir_path):
-            pythoncom.CoInitialize()
-            try:
-                if machine.etat == ALLUME:
-                    machine.put(file_path, dir_path)
-            finally:
-                pythoncom.CoUninitialize()
-            return
-
-        self._run_threads(machine_put_thread, *self.machines, file_path=file_path, dir_path=dir_path)
-        logger_info.info("%s OK" % self.name)
-
-    def clean(self):
-        def machine_clean_thread(machine):
-            pythoncom.CoInitialize()
-            try:
-                if machine.etat == ALLUME:
-                    for name in machine.last_output_cmd.split():
-                        if re.fullmatch(r'^todel[0-9]{1,4}[0-9|a-f]{32}$', name):
-                            machine.run_remote_cmd('rd /s /q %s%s' % (REMOTE_PATH, name))
-            finally:
-                pythoncom.CoUninitialize()
-            return
-
-        self.run_remote_cmd("dir /B c:\ ")
-        self._run_threads(machine_clean_thread, *self.machines)
-        logger_info.info("%s OK" % self.name)
-        return
-
-    def wol(self):
-        for machine in self.machines:
-            if machine.etat == ETEINT:
-                machine.wol()
-        return
-
-    def shutdown(self):
-        def machine_shutdown_thread(machine):
-            pythoncom.CoInitialize()
-            try:
-                if machine.etat == ALLUME:
-                    machine.shutdown()
-                    machine.etat = ETEINT
-            finally:
-                pythoncom.CoUninitialize()
-            return
-
-        self._run_threads(machine_shutdown_thread, *self.machines)
-        logger_info.info("%s OK" % self.name)
-        return
-
-    def str_salle(self):
+    def str_groupe(self):
         """fonction qui s'adapte en fonction du nombre de colonne de la
         console"""
         columns_term = os.get_terminal_size().columns
@@ -229,87 +85,6 @@ class Salle:
         lignes.append(resultat.strip())
         resultat = "\n".join(lignes)
         return resultat
-
-    def presentation(self, liste_str):
-        """utilisé par str_users et str_user_group pour adapter la sortie en
-fonction du nombre de colonne de la console """
-        columns_term = os.get_terminal_size().columns
-        str_resultat = ""
-        # on repere la plus longue sortie qui servira de reference
-        max_len = len(max([re.sub('\x1b.*?m', '', s) for s in liste_str], key=len))
-        # nbre_col-> compte combien de sortie on va mettre sur une meme ligne
-        # avec un espacement minimum de 4
-        nbre_col = columns_term // (max_len+4)
-        # on decooupe, chaque element de sous_liste_str correspond à une ligne
-        sous_listes_str = [liste_str[i:i + nbre_col] for i in range(0, len(liste_str), nbre_col)]
-        str_template = "{:<%i}" % max_len
-        for liste in sous_listes_str:
-            str_resultat += "    ".join([str_template.format(s) for s in liste]) + '\n'
-        return str_resultat
-
-    def str_users(self):
-        def str_users_thread(machine):
-            pythoncom.CoInitialize()
-            # print('avant thread',pythoncom._GetInterfaceCount())
-            try:
-                str_resultat = machine.str_users()
-            finally:
-                pythoncom.CoUninitialize()
-            # print('apres thread',pythoncom._GetInterfaceCount())
-            return str_resultat
-
-        str_resultat = ""
-        resultat_threads = []
-        str_resultat += Fore.LIGHTCYAN_EX + self.name + '\n' + Fore.RESET
-        param = [machine for machine in self.machines]
-        resultat_threads = self._run_threads(str_users_thread, *param)
-        resultat_threads.sort()
-        logger_info.info("%s OK" % self.name)
-        str_resultat += self.presentation(resultat_threads)
-        return str_resultat
-
-    def str_user_groups(self, user):
-        def str_user_groups_thread(machine, user):
-            pythoncom.CoInitialize()
-            try:
-                str_resultat = machine.str_user_groups(user)
-            finally:
-                pythoncom.CoUninitialize()
-            return str_resultat
-
-        str_resultat = ""
-        resultat_threads = []
-        str_resultat += Fore.LIGHTCYAN_EX + self.name + '\n' + Fore.RESET
-
-        resultat_threads = self._run_threads(str_user_groups_thread, *self.machines, user=user)
-        resultat_threads.sort()
-        logger_info.info("%s OK" % self.name)
-        str_resultat += self.presentation(resultat_threads)
-        return str_resultat
-
-    def str_erreurs(self):
-        str_resultat = Fore.LIGHTCYAN_EX + self.name + Fore.RESET + '\n'
-        for machine in self.machines:
-            if machine.message_erreur != '':
-                str_resultat += Fore.LIGHTRED_EX + machine.name.split('-')[1][1:] + ': ' + Fore.RESET + machine.message_erreur + '\n'
-        return str_resultat
-
-    def str_cmp(self, str_ref, seuil):
-        str_resultat = Fore.LIGHTCYAN_EX + self.name + '\n' + Fore.RESET
-        for machine in self.machines:
-            score = score_str(machine.last_output_cmd, str_ref)
-            num_machine = self.machines.index(machine) + 1
-            if machine.etat == ETEINT:
-                str_resultat += str(num_machine) + ' '
-            if machine.etat == ALLUME:
-                if score < seuil:
-                    str_resultat += Fore.LIGHTRED_EX + str(num_machine) + ' ' + Fore.RESET
-                else:
-                    str_resultat += Fore.LIGHTGREEN_EX + str(num_machine) + ' ' + Fore.RESET
-        return str_resultat
-
-    def __iter__(self):
-        return iter(self.machines)
 
 
 def main():

@@ -1,40 +1,68 @@
 #! python3
 # coding: utf-8
 
-# todo:
-# la fonction exec est un mot clé python il faut changer le nom
-
+import re
 import docopt2
+import Privilege
 import gc
 from var_global import *
 import os
+import subprocess
+import getpass
+from Groupe import Groupe
 from colorama import Fore
 
 
 def select(param):
-    """Sélectionne les salles, utiliser * pour tout selectionner
+    """Sélectionne les groupes, utiliser * pour tout selectionner
+En utilisant select reg il est possible d'utiliser une expression régulière
+pour sélectionner les salles
 
 Usage:
-  select [help] <nom>...
   select help
+  select reg <expression_reg>
+  select <nom>...
 """
-    global salles, selected_salles
+    global groupes, selected_groupes, machines_dict
 
     doc = select.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
-    if '*' in arg['<nom>']:
-        selected_salles = salles
-    else:
-        selected_salles = [s for s in salles if s.name in arg['<nom>']]
-    print("\n".join([m.str_salle() for m in selected_salles]).strip())
+    if arg['reg']:
+        pattern = re.compile(arg['<expression_reg>'])
+        selected_groupes = [g for g in groupes if pattern.fullmatch(g.name)]
+        selected_machines_groupes = [m.name for g in selected_groupes
+                                     for m in g]
+        selected_machines = [name for name in machines_dict
+                             if pattern.fullmatch(name) and
+                             name not in selected_machines_groupes]
+        if selected_machines:
+            selected_groupes.append(Groupe('AUTRES', selected_machines))
+    if arg['<nom>']:
+        if '*' in arg['<nom>']:
+            selected_groupes = groupes
+        else:
+            # on sélectionne les groupes de la commande select
+            selected_groupes = [g for g in groupes if g.name in arg['<nom>']]
+            # on récupère les noms des machines déja mis dans les groupes selectionnés
+            selected_machines_groupes = [m.name for g in selected_groupes for m in g]
+            # on sélectionne les machines de la commande select sauf si elles
+            # existent déja dans un groupe
+            selected_machines = [name for name in machines_dict
+                                 if name in arg['<nom>'] and
+                                 name not in selected_machines_groupes]
+            # si la liste des machines à sélectionner n'est pas vide
+            # on crée le groupe AUTRES
+            if selected_machines:
+                selected_groupes.append(Groupe('AUTRES', selected_machines))
+    selected([])
     return
 
 
 def selected(param):
-    """Affiche les salles sélectionnées
+    """Affiche les groupes sélectionnées
 en vert la machine est allumée
 en gris la machine est éteinte
 en rouge la machine a un message d'erreur (utiliser errors pour l'afficher)
@@ -42,36 +70,37 @@ en rouge la machine a un message d'erreur (utiliser errors pour l'afficher)
 Usage:
   selected [help]
 """
-    global salles, selected_salles
+    global groupes, selected_groupes, machines_dict
     doc = selected.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         return print(doc)
-    if selected_salles == []:
-        print('Auncune salle sélectionnée')
+    if selected_groupes == []:
+        print('Auncun groupe sélectionné')
     else:
-        print('-'*(os.get_terminal_size().columns-1))
-        print("\n".join([m.str_salle() for m in selected_salles]).strip())
+        print('-' * (os.get_terminal_size().columns - 1))
+        print("\n".join([m.str_groupe() for m in selected_groupes]).strip())
     return
 
 
 def update(param):
-    """Met à jour les stations allumées ou éteintes des salles selectionnées
+    """Met à jour les stations allumées ou éteintes des groupes selectionnées
 
 Usage:
   update [help]
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = update.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
-    for salle in selected_salles:
+    for groupe in selected_groupes:
         machines_dict.clear()
-        salle.update()
-        machines_dict.update({machine.name: machine for s in salles for machine in s})
+        groupe.update()
+        machines_dict.update({machine.name: machine for s in groupes
+                              for machine in s})
         gc.collect()
     selected([])
     return
@@ -91,7 +120,7 @@ Usage:
   users groupes <name>
   users help
 """
-    global salles, selected_salles
+    global groupes, selected_groupes
 
     doc = users.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -100,21 +129,22 @@ Usage:
         print(doc)
         return
 
-    for salle in selected_salles:
+    for groupe in selected_groupes:
         if arg['add']:
-            groupes = ['Administrateurs'] if arg['<admin>'] == 'admin' else ['Utilisateurs']
-            salle.add_user(arg['<name>'], arg['<password>'], groupes)
+            groupes = ['Administrateurs'] if arg['<admin>'] == 'admin'\
+                else ['Utilisateurs']
+            groupe.add_user(arg['<name>'], arg['<password>'], groupes)
         if arg['del']:
-            salle.del_user(arg['<name>'])
+            groupe.del_user(arg['<name>'])
         if arg['show']:
-            str_resultat += salle.str_users()
+            str_resultat += groupe.str_users()
         if arg['chpass']:
-            salle.chpwd_user(arg['<name>'], arg['<password>'])
+            groupe.chpwd_user(arg['<name>'], arg['<password>'])
         if arg['groupes']:
-            str_resultat += salle.str_user_groups(arg['<name>'])
+            str_resultat += groupe.str_user_groups(arg['<name>'])
 
     if str_resultat != '':
-        print('-'*(os.get_terminal_size().columns-1))
+        print('-' * (os.get_terminal_size().columns - 1))
         print(str_resultat.strip())
     else:
         selected([])
@@ -142,7 +172,7 @@ Options:
     --param=<param>  permet de passer des parametres avec un tirer.
                      On peut utiliser les "" pour passer plusieurs parametres
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = run.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -156,26 +186,30 @@ Options:
     except:
         timeout = None
     if arg['cmd']:
-        list_join = [arg['<commande>']] + arg['<parametre>'] + [arg['--param'].strip('"')]
+        list_join = [arg['<commande>']]\
+            + arg['<parametre>'] + [arg['--param'].strip('"')]
         cmd = ' '.join(list_join)
-        for salle in selected_salles:
-            salle.run_remote_cmd(cmd, timeout, arg["--no-wait"])
+        for groupe in selected_groupes:
+            groupe.run_remote_cmd(cmd, timeout, arg["--no-wait"])
         selected([])
     if arg['file']:
-        for salle in selected_salles:
-            salle.run_remote_file(arg['<nom_fichier>'], " ".join(arg['<option>'] + [arg['--param'].strip('"')]), timeout, arg["--no-wait"])
+        for groupe in selected_groupes:
+            groupe.run_remote_file(arg['<nom_fichier>'],
+                                   " ".join(arg['<option>'] + [arg['--param'].strip('"')]),
+                                   timeout,
+                                   arg["--no-wait"])
         selected([])
     if arg['result']:
         if arg['<machine>'] in machines_dict.keys():
             str_resultat = machines_dict[arg['<machine>']].last_output_cmd \
-                            if machines_dict[arg['<machine>']].last_output_cmd != "" \
-                            else "Aucun resultat à afficher"
+                if machines_dict[arg['<machine>']].last_output_cmd != "" \
+                else "Aucun resultat à afficher"
             print(str_resultat.strip())
         else:
             print("%s n'existe pas" % arg['<machine>'])
     if arg['clean']:
-        for salle in selected_salles:
-            salle.clean()
+        for groupe in selected_groupes:
+            groupe.clean()
         selected([])
     return
 
@@ -192,7 +226,7 @@ Options:
   --seuil=s  le seuil en pourcentage d'acceptation
              ou de rejet pour la comparaison [default: 100]
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = cmp.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -205,7 +239,8 @@ Options:
     except KeyError:
         print("la machine n'existe pas")
         return
-    str_resultat += "\n".join([salle.str_cmp(str_ref, int(arg['--seuil'])) for salle in selected_salles])
+    str_resultat += "\n".join([groupe.str_cmp(str_ref, int(arg['--seuil']))
+                               for groupe in selected_groupes])
     print(str_resultat)
     return
 
@@ -216,7 +251,7 @@ def flush(param):
 Usage:
   flush [help]
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = flush.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -227,9 +262,9 @@ Usage:
 
     str_file = ''
     with open("flush.csv", 'w') as flush_file:
-        for salle in selected_salles:
+        for groupe in selected_groupes:
             list_output = ['"%s"::"%s"' % (machine.name, machine.last_output_cmd)
-                           for machine in salle.machines if machine.etat == 1]
+                           for machine in groupe if machine.etat == 1]
             str_file += "\n".join(list_output)
         flush_file.write(str_file)
 
@@ -244,7 +279,7 @@ Usage:
   put [help] <path_file> <path_dir>
   put help
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
 
     doc = put.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -253,33 +288,33 @@ Usage:
         print(doc)
         return
 
-    for salle in selected_salles:
-        salle.put(arg['<path_file>'], arg['<path_dir>'])
+    for groupe in selected_groupes:
+        groupe.put(arg['<path_file>'], arg['<path_dir>'])
 
     selected([])
     return
 
 
 def wol(param):
-    """Réveil une machine ou les salles selectionnées (wol *)
+    """Réveil une machine ou les groupes selectionnées
 
 Usage:
-  wol [help] <machine>
+  wol [help] [<machine>]
   wol help
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
     doc = wol.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
-    if '*' in arg['<machine>']:
-        for salle in selected_salles:
+    if arg['<machine>'] is None:
+        for groupe in selected_groupes:
             salle.wol()
     else:
         try:
             machines_dict[arg['<machine>']].wol()
-        except Exception:
+        except KeyError:
             print("Le poste n'existe pas")
             return
     print("wol effectué")
@@ -288,26 +323,25 @@ Usage:
 
 
 def shutdown(param):
-    """Eteint une machine ou les salles selectionnées (shutdown *)
+    """Eteint une machine ou les groupes selectionnées
 
 Usage:
-  shutdown [help] <machine>
+  shutdown [help] [<machine>]
   shutdown help
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
     doc = shutdown.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
-    if '*' in arg['<machine>']:
-        for salle in selected_salles:
+    if arg['<machine>'] is None:
+        for groupe in selected_groupes:
             salle.shutdown()
     else:
         try:
             machines_dict[arg['<machine>']].shutdown()
-        except Exception as e:
-            print(e)
+        except KeyError:
             print("Le poste n'existe pas")
             return
     print("shutdown effectué")
@@ -315,41 +349,106 @@ Usage:
     return
 
 
+class VncViewer:
+    _vnc = {}
+
+    def __init__(self):
+        raise Exception("Cette classe ne doit pas être instancié")
+        return
+
+    @staticmethod
+    def open():
+        VncViewer.close()
+        try:
+            VncViewer._vnc['viewer_process'] = subprocess.Popen(
+                ['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
+        except FileNotFoundError:
+            print("vncviewer n'existe pas")
+        return
+
+    @staticmethod
+    def close():
+        try:
+            VncViewer._vnc['viewer_process'].kill()
+            VncViewer._vnc['viewer_process'] = None
+            VncViewer._vnc = {}
+        except (KeyError, AttributeError):
+            pass
+        finally:
+            subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"],
+                            stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        return
+
+
+def vnc(param):
+    """Lance une session vnc sur la machine donnée
+
+Usage:
+  vnc help
+  vnc close <machine>
+  vnc <machine>
+
+"""
+    global groupes, selected_groupes, machines_dict
+    doc = vnc.__doc__
+    arg = docopt2.docopt(doc, argv=param, help=False)
+    if arg['help']:
+        print(doc)
+        return
+    if arg['close']:
+        try:
+            VncViewer.close()
+            machines_dict[arg['<machine>']].vnc_close()
+        except KeyError:
+            print("La machine n'existe pas")
+            return
+    else:
+        if arg['<machine>']:
+            try:
+                VncViewer.open()
+                machines_dict[arg['<machine>']].vnc_open()
+            except KeyError:
+                print("La machine n'existe pas")
+                VncViewer.close()
+                return
+    selected([])
+    return
+
+
 def help(param):
     """Pour avoir de l'aide sur une commande : commande help
 
 Commandes :
-  selected: affiche les salles sélectionnées
-  select: selectionne les salles à utliser (voir le fichier conf.ini)
+  selected: affiche les groupes sélectionnées
+  select: selectionne les groupes à utliser (voir le fichier conf.ini)
   users: commande pour manipuler les usilisateurs locaux
-  update: met à jours les salles sélectionnées
+  update: met à jours les groupes sélectionnées
   run: execute une commande à distance
   cmp: compare les résultats d'une commande run
   errors: affiche les erreurs des machines en rouge
   put: envoie un fichier dans un repertoire de destination sur les machines
+  password: demande le mot de passe pour élever ses privilèges
   flush: écrit un fichier csv contenant les résultats de la dernière commande
   wol: allume les machines selectionnées
         (un dossier mac doit être crée pour stocker les adresses mac)
   shutdown: éteint les machines selectionnées
   quit : quitte
 """
-    global salles, selected_salles
     print(help.__doc__)
     return
 
 
 def errors(param):
-    """Affiche les erreurs des machines affichées en rouge.
-utiliser * pour tout afficher.
+    """Affiche les erreurs des machines selectionnées qui sont affichées en rouge.
 errors clear efface toutes les erreurs
 
 Usage:
   errors clear
   errors help
-  errors <machine>
+  errors [<machine>]
 
 """
-    global salles, selected_salles, machines_dict
+    global groupes, selected_groupes, machines_dict
     str_resultat = ""
     doc = errors.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -357,31 +456,62 @@ Usage:
         print(doc)
         return
     if arg['clear']:
-        for salle in selected_salles:
-            for machine in salle:
+        for groupe in selected_groupes:
+            for machine in groupe:
                 machine.message_erreur = ''
         selected([])
         return
-    if '*' in arg['<machine>']:
-        for salle in selected_salles:
-            str_resultat += salle.str_erreurs()
+    if arg['<machine>'] is None:
+        for groupe in selected_groupes:
+            str_resultat += groupe.str_erreurs()
     else:
         try:
             str_resultat = Fore.LIGHTRED_EX + arg['<machine>'] + ': ' +\
-                           Fore.RESET + '\n' +\
-                           machines_dict[arg['<machine>']].message_erreur
-        except Exception:
+                Fore.RESET + '\n' +\
+                machines_dict[arg['<machine>']].message_erreur
+        except KeyError:
             str_resultat = "Le poste n'existe pas"
     print(str_resultat.strip())
     return
 
 
-def quit(param):
-    global salles, selected_salles, machines_dict
+def password(param):
+    """Demande le mot de passe du compte mis dans le fichier conf.ini
+et élève les privilèges de l'application avec ce compte
+L'option uac sert à passer le contrôle uac
 
-    # pour être sur que le garbage collector nettoie bien tout ceux qui a été laissé par les thread
-    salles.clear()
-    selected_salles.clear()
+Usage:
+  password help
+  password [uac]
+
+"""
+    global domaine
+    doc = password.__doc__
+    if not domaine or domaine['login'] is None:
+        print("Aucun domaine et login dans le fichier conf.ini")
+        return
+
+    arg = docopt2.docopt(doc, argv=param, help=False)
+    user_pass = getpass.getpass('mot de passe pour le compte %s: ' % domaine['login'])
+    uac = arg['uac']
+    try:
+        Privilege.get_privilege(domaine['login'], user_pass, domaine['name'], uac)
+        raise SystemExit()
+    except OSError as o:
+        str_resultat = Fore.LIGHTRED_EX\
+            + "Erreur lors de l'élevation de privilège: "\
+            + fix_str(o.strerror) + Fore.RESET
+        print(str_resultat)
+    return
+
+
+def quit(param):
+    global groupes, selected_groupes, machines_dict
+
+    # pour être sur que le garbage collector nettoie bien tout ceux
+    # qui a été laissé par les thread
+    groupes.clear()
+    selected_groupes.clear()
     machines_dict.clear()
     gc.collect()
     raise SystemExit

@@ -25,10 +25,13 @@ gris  -> la machine est éteinte
 rouge -> la machine est en erreur
 
 ## select
-Selectionne les salles où les prochaines commandes agiront.
+Selectionne les salles, machines où les prochaines commandes agiront.
+
+On peut passer une expression régulière
 ```
-select <salle>
+select salle1 salle2 machine1 machine2
 select *
+select reg .*(1|2)
 ```
 
 ## users
@@ -131,6 +134,13 @@ Eteint les machines sélectionnées.
 ```
 shutdown <machine>
 shutdown *
+```
+
+## vnc
+Lance/ferme une session vnc (ultravnc) sur la machine sélectionnée
+```
+vnc open <machine>
+vnc close <machine>
 ```
 
 ## quit
