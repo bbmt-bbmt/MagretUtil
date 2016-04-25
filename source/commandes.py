@@ -381,7 +381,7 @@ class VncViewer:
 
 
 def vnc(param):
-    """Lance une session vnc sur la machine donnée
+    """Lance/ferme une session vnc sur la machine donnée
 
 Usage:
   vnc help
