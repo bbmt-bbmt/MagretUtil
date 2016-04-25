@@ -31,15 +31,18 @@ Usage:
         print(doc)
         return
     if arg['reg']:
-        pattern = re.compile(arg['<expression_reg>'])
-        selected_groupes = [g for g in groupes if pattern.fullmatch(g.name)]
-        selected_machines_groupes = [m.name for g in selected_groupes
-                                     for m in g]
-        selected_machines = [name for name in machines_dict
-                             if pattern.fullmatch(name) and
-                             name not in selected_machines_groupes]
-        if selected_machines:
-            selected_groupes.append(Groupe('AUTRES', selected_machines))
+        try:
+            pattern = re.compile(arg['<expression_reg>'])
+            selected_groupes = [g for g in groupes if pattern.fullmatch(g.name)]
+            selected_machines_groupes = [m.name for g in selected_groupes
+                                         for m in g]
+            selected_machines = [name for name in machines_dict
+                                 if pattern.fullmatch(name) and
+                                 name not in selected_machines_groupes]
+            if selected_machines:
+                selected_groupes.append(Groupe('AUTRES', selected_machines))
+        except re.error:
+            print("L'expression régulière n'est pas valide")
     if arg['<nom>']:
         if '*' in arg['<nom>']:
             selected_groupes = groupes
