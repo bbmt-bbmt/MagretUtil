@@ -3,7 +3,7 @@ psexec like utilisant wmi pour réseaux Magret.
 
 Le logiciel est multithreadé par salle.
 
-Lien pour télécharger la dernière version : [zip-file](https://github.com/bbmt-bbmt/MagretUtil/blob/master/bin/MagretUtil-v0.1.zip?raw=true)
+Lien pour télécharger la dernière version : [zip-file](https://github.com/bbmt-bbmt/MagretUtil/releases/download/0.1/MagretUtil-v0.1.zip)
 
 # liste des commandes disponible
 pour afficher l'aide d'une commande
@@ -139,8 +139,16 @@ shutdown *
 ## vnc
 Lance/ferme une session vnc (ultravnc) sur la machine sélectionnée
 ```
-vnc open <machine>
+vnc <machine>
 vnc close <machine>
+```
+
+## password
+Lance la procédure d'élévation de privilège si on n'est pas connecté en administrateur du domaine.
+Avec l'option uac, l'élévation de privilège tente de bypasser le contrôle utilisateur (uac).
+```
+password
+password uac
 ```
 
 ## quit
