@@ -198,6 +198,31 @@ class Groupe:
         logger_info.info("%s OK" % self.name)
         return
 
+    def str_logged(self):
+        def str_logged_thread(machine):
+            pythoncom.CoInitialize()
+            try:
+                str_resultat = machine.str_logged()
+            finally:
+                pythoncom.CoUninitialize()
+            return str_resultat
+
+        str_resultat = ""
+        resultat_threads = []
+        str_resultat += Fore.LIGHTCYAN_EX + self.name + '\n' + Fore.RESET
+        param = [machine for machine in self.machines]
+        resultat_threads = self._run_threads(str_logged_thread, *param)
+        resultat_threads = list(set(resultat_threads))
+        try:
+            resultat_threads.remove(None)
+        except ValueError:
+            # si None n'est pas dans la liste une exception est levée et on pass
+            pass
+        resultat_threads.sort()
+        logger_info.info("%s OK" % self.name)
+        str_resultat += self.presentation(resultat_threads)
+        return str_resultat
+
     def str_groupe(self):
         """fonction qui s'adapte en fonction du nombre de colonne de la
         console"""
@@ -230,7 +255,7 @@ fonction du nombre de colonne de la console """
         columns_term = os.get_terminal_size().columns
         str_resultat = ""
         # on repere la plus longue sortie qui servira de reference
-        max_len = len(max([re.sub('\x1b.*?m', '', s) for s in liste_str], key=len))
+        max_len = len(max([re.sub('\x1b.*?m', '', s) for s in liste_str], key=len, default=''))
         # nbre_col-> compte combien de sortie on va mettre sur une meme ligne
         # avec un espacement minimum de 4
         nbre_col = columns_term // (max_len + 4)

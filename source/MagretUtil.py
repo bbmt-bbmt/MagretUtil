@@ -118,7 +118,7 @@ def main():
     # Si le login du fichier config est différent que celui avec lequel
     # on est connecté, on lance la procédure délévation de privilège
     if domaine['login'] is not None and getpass.getuser() != domaine['login']:
-        commandes.password(['uac'])
+        commandes.password([])
 
     # Si une demande de bypasser l'uac est demandé, on lance la procédure
     if sys.argv[1:] and sys.argv[1] == "pass_uac":

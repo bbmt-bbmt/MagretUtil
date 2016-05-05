@@ -34,13 +34,17 @@ Usage:
         try:
             pattern = re.compile(arg['<expression_reg>'])
             selected_groupes = [g for g in groupes if pattern.fullmatch(g.name)]
-            selected_machines_groupes = [m.name for g in selected_groupes
+            selected_machines_groupes = [m for g in selected_groupes
                                          for m in g]
-            selected_machines = [name for name in machines_dict
+            selected_machines = [m for name, m in machines_dict.items()
                                  if pattern.fullmatch(name) and
-                                 name not in selected_machines_groupes]
+                                 m not in selected_machines_groupes]
             if selected_machines:
-                selected_groupes.append(Groupe('AUTRES', selected_machines))
+                groupe_autre = Groupe('AUTRES', [])
+                groupe_autre.machines.extend(selected_machines)
+                groupe_autre.machines.sort(key=lambda x: x.name)
+                groupe_autre.dict_machines = {m.name: m for m in selected_machines}
+                selected_groupes.append(groupe_autre)
         except re.error:
             print("L'expression régulière n'est pas valide")
     if arg['<nom>']:
@@ -53,13 +57,17 @@ Usage:
             selected_machines_groupes = [m.name for g in selected_groupes for m in g]
             # on sélectionne les machines de la commande select sauf si elles
             # existent déja dans un groupe
-            selected_machines = [name for name in machines_dict
+            selected_machines = [m for name, m in machines_dict.items()
                                  if name in arg['<nom>'] and
-                                 name not in selected_machines_groupes]
+                                 m not in selected_machines_groupes]
             # si la liste des machines à sélectionner n'est pas vide
             # on crée le groupe AUTRES
             if selected_machines:
-                selected_groupes.append(Groupe('AUTRES', selected_machines))
+                groupe_autre = Groupe('AUTRES', [])
+                groupe_autre.machines.extend(selected_machines)
+                groupe_autre.machines.sort(key=lambda x: x.name)
+                groupe_autre.dict_machines = {m.name: m for m in selected_machines}
+                selected_groupes.append(groupe_autre)
     selected([])
     return
 
@@ -99,11 +107,20 @@ Usage:
     if arg['help']:
         print(doc)
         return
+    # On differencie l'update
+    # pour un groupe du fichier ini on reset les variables pour ne pas avoir des résidus
+    # de référence aux thread qui traine
+    # pour le groupe AUTRES on utilise la fonction update de la classe machine
+    # le groupe AUTRES n'a pas été soumis au thread
     for groupe in selected_groupes:
-        machines_dict.clear()
-        groupe.update()
-        machines_dict.update({machine.name: machine for s in groupes
-                              for machine in s})
+        if groupe.name != 'AUTRES':
+            machines_dict.clear()
+            groupe.update()
+            machines_dict.update({machine.name: machine for s in groupes
+                                  for machine in s})
+        else:
+            for m in groupe:
+                m.update_etat()
         gc.collect()
     selected([])
     return
@@ -119,6 +136,7 @@ Usage:
   users add <name> <password> [<admin>]
   users del <name>
   users show
+  users logged
   users chpass <name> <password>
   users groupes <name>
   users help
@@ -141,6 +159,8 @@ Usage:
             groupe.del_user(arg['<name>'])
         if arg['show']:
             str_resultat += groupe.str_users()
+        if arg['logged']:
+            str_resultat += groupe.str_logged()
         if arg['chpass']:
             groupe.chpwd_user(arg['<name>'], arg['<password>'])
         if arg['groupes']:
@@ -192,6 +212,7 @@ Options:
         list_join = [arg['<commande>']]\
             + arg['<parametre>'] + [arg['--param'].strip('"')]
         cmd = ' '.join(list_join)
+
         for groupe in selected_groupes:
             groupe.run_remote_cmd(cmd, timeout, arg["--no-wait"])
         selected([])
@@ -313,7 +334,7 @@ Usage:
         return
     if arg['<machine>'] is None:
         for groupe in selected_groupes:
-            salle.wol()
+            groupe.wol()
     else:
         try:
             machines_dict[arg['<machine>']].wol()
@@ -340,7 +361,7 @@ Usage:
         return
     if arg['<machine>'] is None:
         for groupe in selected_groupes:
-            salle.shutdown()
+            groupe.shutdown()
     else:
         try:
             machines_dict[arg['<machine>']].shutdown()
@@ -365,12 +386,14 @@ class VncViewer:
         try:
             VncViewer._vnc['viewer_process'] = subprocess.Popen(
                 ['vnc\\vncviewer.exe', '/listen'], stderr=subprocess.DEVNULL)
+            print('viewer lancé')
         except FileNotFoundError:
             print("vncviewer n'existe pas")
         return
 
     @staticmethod
     def close():
+        # c'est un peu beaucoup pour fermer un process ...
         try:
             VncViewer._vnc['viewer_process'].kill()
             VncViewer._vnc['viewer_process'] = None
@@ -409,7 +432,7 @@ Usage:
         if arg['<machine>']:
             try:
                 VncViewer.open()
-                machines_dict[arg['<machine>']].vnc_open()
+                machines_dict[arg['<machine>']].vnc_open(os.getenv('COMPUTERNAME'))
             except KeyError:
                 print("La machine n'existe pas")
                 VncViewer.close()

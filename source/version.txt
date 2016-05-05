@@ -6,8 +6,9 @@
   Possibilité de chainer les noms de salle et de machine
   Possibilité d'utiliser une expression régulière pour choisir les salles ou machines
   Utilisation de la notion de groupe de machine plutôt que de salle
-4.Ajout d'une commande vnc permettant de lancer une session vnc sur la machine selectionnée
-5.Possibilité de se connecter avec un autre compte et d'augmenter ses privilèges
+4.Ajout de la commande users logged pour voir qui est connecté sur le poste
+5.Ajout d'une commande vnc permettant de lancer une session vnc sur la machine selectionnée
+6.Possibilité de se connecter avec un autre compte et d'augmenter ses privilèges
 
 11/04/2016 MagretUtil v0.1
 première publication

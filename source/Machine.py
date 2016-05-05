@@ -16,6 +16,7 @@ import Psexec
 from colorama import Fore
 
 from var_global import fix_str
+from var_global import domaine
 
 # logger = logging.getLogger("MagretUtil.Machine")
 
@@ -34,7 +35,7 @@ class Machine:
         self.etat = ETEINT
         self.ip = None
         self.mac = None
-        self._vnc = {}
+        self._vnc_uid = None
         self.message_erreur = ""
         self.last_output_cmd = ""
         self.update_etat()
@@ -136,39 +137,48 @@ class Machine:
             _psexec = None
         return
 
-    def vnc_open(self):
+    def _run_gui_file(self, local_file, login):
+        # j'utilise schtask plutot que du wmi car l'impolémentation avec wmi
+        # repose sur la commande déprécié at
+        subprocess.call(['schtasks', '/create', '/tn', 'todel', '/tr', local_file, '/s', self.name, '/ru', login, '/sc', 'ONSTART', '/it', '/f'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.call(['schtasks', '/run', '/tn', 'todel', '/s', self.name, '/i'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.call(['schtasks', '/delete', '/tn', 'todel', '/s', self.name, '/f'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        return
+
+    def logged(self):
+        try:
+            wmi = WmiModule.WMI(self.name)
+            user_logged = wmi.Win32_ComputerSystem()[0].UserName
+        except WmiModule.x_wmi as w:
+                self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
+                if w.com_error is not None:
+                    self.message_erreur += fix_str(w.com_error.strerror)
+        return user_logged
+
+    def vnc_open(self, computer_name):
         if self.etat == ETEINT:
             return
         self.vnc_close()
         try:
             _psexec = Psexec.PsExec(self.name, REMOTE_PATH)
-            self._vnc['uid'] = _psexec._get_uid()
-            remote_directory = os.path.join(_psexec.remote_path, self._vnc['uid'])
+            self._vnc_uid = _psexec._get_uid()
+            remote_directory = os.path.join(_psexec.remote_path, self._vnc_uid)
             vnc_file = ['vnc\\winvnc.exe', 'vnc\\UltraVNC.ini', 'vnc\\vnchooks.dll']
 
             for file in vnc_file:
                 _psexec._net_copy(file, remote_directory)
 
-            cmd_kill = os.path.join(remote_directory, 'winvnc.exe -kill')
             cmd_run = os.path.join(remote_directory, 'winvnc.exe')
             cmd_connect = os.path.join(remote_directory,
-                                       'winvnc.exe -connect ' + self.name)
+                                       'winvnc.exe -connect ' + computer_name)
 
-            SW_SHOWMINIMIZED = 0
-            startup = _psexec.connection.Win32_ProcessStartup.new(ShowWindow=SW_SHOWMINIMIZED)
-            _psexec.connection.Win32_Process.Create(CommandLine=cmd_kill,
-                                                    ProcessStartupInformation=startup)
-            self._vnc['server_pid'], return_value = _psexec.connection.Win32_Process.Create(CommandLine=cmd_run, ProcessStartupInformation=startup)
-            _psexec.connection.Win32_Process.Create(CommandLine=cmd_connect,
-                                                    ProcessStartupInformation=startup)
+            login = self.logged()
+            print(login)
+            self._run_gui_file(cmd_run, login)
+            self._run_gui_file(cmd_connect, login)
         except PermissionError:
             self.message_erreur += "Vous n'avez pas les droits administrateur\n"
             # logger.error(self.name + ": " + str(p))
-        except WmiModule.x_wmi as w:
-            self.message_erreur += "Erreur wmi: %s \n" % w.info
-            if w.com_error is not None:
-                self.message_erreur += fix_str(w.com_error.strerror)
-            # logger.error(self.name + ": " + str(w))
         except FileNotFoundError as f:
             self.message_erreur += "Le fichier %s n'existe pas" % f.filename
         finally:
@@ -178,31 +188,14 @@ class Machine:
     def vnc_close(self):
         if self.etat == ETEINT:
             return
-        if self._vnc:
-            try:
-                _psexec = Psexec.PsExec(self.name, REMOTE_PATH)
-                remote_directory = os.path.join(_psexec.remote_path, self._vnc['uid'])
-                cmd = os.path.join(remote_directory, 'winvnc.exe -kill')
-                SW_SHOWMINIMIZED = 0
-                startup = _psexec.connection.Win32_ProcessStartup.new(ShowWindow=SW_SHOWMINIMIZED)
-                _psexec.connection.Win32_Process.Create(CommandLine=cmd,
-                                                        ProcessStartupInformation=startup)
-                _psexec._watcher_process_del(self._vnc['server_pid'])
-                _psexec.run_remote_cmd('rd /s /q %s' % remote_directory)
-            except PermissionError:
-                self.message_erreur += "Vous n'avez pas les droits administrateur\n"
-                # logger.error(self.name + ": " + str(p))
-            except WmiModule.x_wmi as w:
-                self.message_erreur += "Erreur wmi: %s \n" % w.info
-                if w.com_error is not None:
-                    self.message_erreur += fix_str(w.com_error.strerror)
-                # logger.error(self.name + ": " + str(w))
-            finally:
-                _psexec._release_uid(self._vnc['uid'])
-                self._vnc = {}
-                _psexec = None
-        subprocess.call(['taskkill', "/F", "/S", self.name, "/IM", "winvnc.exe"],
-                        stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        try:
+            subprocess.call(["taskkill", "/F", "/IM", "winvnc.exe", '/s', self.name],
+                            stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        except PermissionError:
+            self.message_erreur += "Vous n'avez pas les droits administrateur\n"
+            # logger.error(self.name + ": " + str(p))
+        finally:
+            self._vnc_uid = None
         return
 
     def put(self, file_path, dir_path):
@@ -362,6 +355,13 @@ efface les erreurs, met à jour l'état, l'ip """
             # logger.error(self.name + ": " + log_erreur)
         return
 
+    def str_logged(self):
+        if self.etat == ETEINT:
+            return None
+        resultat = self.name + ': '        
+        resultat += Fore.LIGHTGREEN_EX + self.logged() + Fore.RESET
+        return resultat
+
     def str_users(self):
         """ Retourne un string formatter avec colorama de la fonction lister_user()"""
         resultat = self.name + ': '
@@ -398,6 +398,8 @@ efface les erreurs, met à jour l'état, l'ip """
 
 
 def main():
+    m = Machine('DESKTOP-P01')
+    m.vnc_open('DESKTOP-P01')
     pass
 
 if __name__ == '__main__':
