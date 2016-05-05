@@ -402,7 +402,7 @@ class VncViewer:
             pass
         finally:
             subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"],
-                            stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+                            stderr=subprocess.DEVNULL)
         return
 
 

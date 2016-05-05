@@ -140,7 +140,7 @@ class Machine:
     def _run_gui_file(self, local_file, login):
         # j'utilise schtask plutot que du wmi car l'impolémentation avec wmi
         # repose sur la commande déprécié at
-        subprocess.call(['schtasks', '/create', '/tn', 'todel', '/tr', local_file, '/s', self.name, '/ru', login, '/sc', 'ONSTART', '/it', '/f'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.call(['schtasks', '/create', '/tn', 'todel', '/tr', local_file, '/s', self.name, '/ru', login, '/sc', 'ONSTART', '/it', '/f'], stdout=subprocess.DEVNULL) # stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         subprocess.call(['schtasks', '/run', '/tn', 'todel', '/s', self.name, '/i'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         subprocess.call(['schtasks', '/delete', '/tn', 'todel', '/s', self.name, '/f'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         return
@@ -173,7 +173,6 @@ class Machine:
                                        'winvnc.exe -connect ' + computer_name)
 
             login = self.logged()
-            print(login)
             self._run_gui_file(cmd_run, login)
             self._run_gui_file(cmd_connect, login)
         except PermissionError:
