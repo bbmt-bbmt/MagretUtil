@@ -320,11 +320,10 @@ Usage:
 
 
 def wol(param):
-    """Réveil une machine ou les groupes selectionnées
+    """Réveil les groupes selectionnées
 
 Usage:
-  wol [help] [<machine>]
-  wol help
+  wol [help]
 """
     global groupes, selected_groupes, machines_dict
     doc = wol.__doc__
@@ -332,15 +331,8 @@ Usage:
     if arg['help']:
         print(doc)
         return
-    if arg['<machine>'] is None:
-        for groupe in selected_groupes:
-            groupe.wol()
-    else:
-        try:
-            machines_dict[arg['<machine>']].wol()
-        except KeyError:
-            print("Le poste n'existe pas")
-            return
+    for groupe in selected_groupes:
+        groupe.wol()
     print("wol effectué")
     print("lancé la commande update pour mettre à jours l'affichage")
     return
@@ -350,8 +342,7 @@ def shutdown(param):
     """Eteint une machine ou les groupes selectionnées
 
 Usage:
-  shutdown [help] [<machine>]
-  shutdown help
+  shutdown [help]
 """
     global groupes, selected_groupes, machines_dict
     doc = shutdown.__doc__
@@ -359,15 +350,8 @@ Usage:
     if arg['help']:
         print(doc)
         return
-    if arg['<machine>'] is None:
-        for groupe in selected_groupes:
-            groupe.shutdown()
-    else:
-        try:
-            machines_dict[arg['<machine>']].shutdown()
-        except KeyError:
-            print("Le poste n'existe pas")
-            return
+    for groupe in selected_groupes:
+        groupe.shutdown()
     print("shutdown effectué")
     print("lancé la commande update pour mettre à jours l'affichage")
     return
@@ -402,7 +386,7 @@ class VncViewer:
             pass
         finally:
             subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"],
-                            stderr=subprocess.DEVNULL)
+                            stdout=subprocess.DEVNULL)
         return
 
 
@@ -413,7 +397,6 @@ Usage:
   vnc help
   vnc close <machine>
   vnc <machine>
-
 """
     global groupes, selected_groupes, machines_dict
     doc = vnc.__doc__
@@ -447,7 +430,7 @@ def help(param):
 Commandes :
   selected: affiche les groupes sélectionnées
   select: selectionne les groupes à utliser (voir le fichier conf.ini)
-  users: commande pour manipuler les usilisateurs locaux
+  users: commande pour manipuler les utilisateurs locaux
   update: met à jours les groupes sélectionnées
   run: execute une commande à distance
   cmp: compare les résultats d'une commande run
@@ -455,6 +438,7 @@ Commandes :
   put: envoie un fichier dans un repertoire de destination sur les machines
   password: demande le mot de passe pour élever ses privilèges
   flush: écrit un fichier csv contenant les résultats de la dernière commande
+  vnc: lance une session vnc sur la machine sélectionnée
   wol: allume les machines selectionnées
         (un dossier mac doit être crée pour stocker les adresses mac)
   shutdown: éteint les machines selectionnées
@@ -513,11 +497,13 @@ Usage:
 """
     global domaine
     doc = password.__doc__
+    arg = docopt2.docopt(doc, argv=param, help=False)
+    if arg['help']:
+        print(doc)
+        return
     if not domaine or domaine['login'] is None:
         print("Aucun domaine et login dans le fichier conf.ini")
         return
-
-    arg = docopt2.docopt(doc, argv=param, help=False)
     user_pass = getpass.getpass('mot de passe pour le compte %s: ' % domaine['login'])
     uac = arg['uac']
     try:

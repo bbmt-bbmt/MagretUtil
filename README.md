@@ -66,6 +66,10 @@ Afficher tous les groupes d'un utilisateur
 ```
 users groupes <name>
 ```
+Afficher les utilisateurs connectés sur les machines selectionnées
+```
+users logged
+```
 
 ## update
 Met à jours les salles sélectionnées.
@@ -132,14 +136,12 @@ errors clear
 ## wol
 Allume les machines selectionnées. Un dossier mac doit être crée pour stocker les adresses mac lorsque la machine est vue pour la première fois.
 ```
-wol <machine>
 wol
 ```
 
 ## shutdown
 Eteint les machines sélectionnées.
 ```
-shutdown <machine>
 shutdown
 ```
 

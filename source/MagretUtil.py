@@ -36,6 +36,7 @@ from Salle import Salle
 import commandes
 from var_global import *
 import Privilege
+import AutoComplete
 
 
 def _protect_quotes(text):
@@ -107,7 +108,7 @@ def init_groupes(ini_groupes):
 
 
 def main():
-    global domaine
+    global domaine, machines_dict
     sys.excepthook = erreur_final
 
     ini_groupes, dom = lire_fichier_ini('conf.ini')
@@ -127,6 +128,8 @@ def main():
 
     logger_info.info('Initialisation des salles :')
     init_groupes(ini_groupes)
+
+    AutoComplete.init_auto_complete()
 
     # efface l'écran
     print('\x1b[2J', end='')
