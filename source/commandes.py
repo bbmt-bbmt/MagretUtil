@@ -234,6 +234,9 @@ Options:
     if arg['clean']:
         for groupe in selected_groupes:
             groupe.clean()
+        for f in os.listdir():
+            if re.fullmatch(r'^todel[0-9]{1,4}[0-9|a-f]{32}$', f):
+                subprocess.call(['rd', '/s', '/q', f], shell=True)
         selected([])
     return
 
@@ -386,7 +389,7 @@ class VncViewer:
             pass
         finally:
             subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"],
-                            stdout=subprocess.DEVNULL)
+                            stderr=subprocess.DEVNULL)
         return
 
 
@@ -503,7 +506,12 @@ Usage:
         return
     if not domaine or domaine['login'] is None:
         print("Aucun domaine et login dans le fichier conf.ini")
-        return
+        domaine['name'] = input('domaine: ')
+        domaine['name'] = domaine['name'] or None
+        domaine['login'] = input('login: ')
+        domaine['login'] = domaine['login'] or None
+        if domaine['login'] is None:
+            return
     user_pass = getpass.getpass('mot de passe pour le compte %s: ' % domaine['login'])
     uac = arg['uac']
     try:
