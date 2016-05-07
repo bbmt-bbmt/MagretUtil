@@ -62,7 +62,7 @@ def init_auto_complete():
             "clean": [],
             "help": []
         },
-        "cmp": ["help"] + machines_name,
+        "cmp": ["help", "--seuil"] + machines_name,
         "errors": ["clear", "help"] + machines_name,
         "put": ["help"],
         "password": ["help", "uac"],
