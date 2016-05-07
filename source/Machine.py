@@ -16,7 +16,6 @@ import Psexec
 from colorama import Fore
 
 from var_global import fix_str
-from var_global import domaine
 
 # logger = logging.getLogger("MagretUtil.Machine")
 
@@ -138,14 +137,21 @@ class Machine:
         return
 
     def _run_gui_file(self, local_file, login):
+        """Permet de lancer un executable de la machine local avec
+        les droits de l'utilisateur connecté et ainsi pouvoir interagir
+        avec le bureau
+        """
         # j'utilise schtask plutot que du wmi car l'impolémentation avec wmi
         # repose sur la commande déprécié at
-        subprocess.call(['schtasks', '/create', '/tn', 'todel', '/tr', local_file, '/s', self.name, '/ru', login, '/sc', 'ONSTART', '/it', '/f'], stdout=subprocess.DEVNULL) # stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.call(['schtasks', '/create', '/tn', 'todel', '/tr', local_file, '/s', self.name, '/ru', login, '/sc', 'ONSTART', '/it', '/f'], stdout=subprocess.DEVNULL)
         subprocess.call(['schtasks', '/run', '/tn', 'todel', '/s', self.name, '/i'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         subprocess.call(['schtasks', '/delete', '/tn', 'todel', '/s', self.name, '/f'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         return
 
     def logged(self):
+        """ Retourne le login de l'utilisateur connecté sur la machine
+        pour pouvoir après le donner à run_gui_file
+        """
         try:
             wmi = WmiModule.WMI(self.name)
             user_logged = wmi.Win32_ComputerSystem()[0].UserName
@@ -156,6 +162,9 @@ class Machine:
         return user_logged
 
     def vnc_open(self, computer_name):
+        """ lance le serveur sur la machine après avoir copié tous les
+        fichiers nécessaire
+        """
         if self.etat == ETEINT:
             return
         self.vnc_close()
@@ -185,6 +194,8 @@ class Machine:
         return
 
     def vnc_close(self):
+        """ Kill le server vnc de la machine
+        """
         if self.etat == ETEINT:
             return
         try:

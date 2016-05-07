@@ -108,8 +108,8 @@ Usage:
         print(doc)
         return
     # On differencie l'update
-    # pour un groupe du fichier ini on reset les variables pour ne pas avoir des résidus
-    # de référence aux thread qui traine
+    # pour un groupe du fichier ini on reset les variables pour ne pas avoir
+    # des résidus de référence aux thread qui trainent
     # pour le groupe AUTRES on utilise la fonction update de la classe machine
     # le groupe AUTRES n'a pas été soumis au thread
     for groupe in selected_groupes:

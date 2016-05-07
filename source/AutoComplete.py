@@ -8,6 +8,9 @@ from var_global import *
 
 
 class Completer:
+    """Classe qui fournit la fonction complete à readline
+    la fonction walk est récursive et cyclique pour parcourir
+    l'arbre des options de commandes """
 
     def __init__(self, option_tree):
         self.option_tree = option_tree
@@ -53,7 +56,8 @@ def init_auto_complete():
         },
         "run": {
             "cmd": ["--param", "--timeout", "--no-wait"],
-            "file": ["--param", "--timeout", "--no-wait"] + [f for f in os.listdir() if re.fullmatch(".*(\.exe|\.msi)", f)],
+            "file": ["--param", "--timeout", "--no-wait"] +
+                    [f for f in os.listdir() if re.fullmatch(".*(\.exe|\.msi)", f)],
             "result": machines_name,
             "clean": [],
             "help": []
