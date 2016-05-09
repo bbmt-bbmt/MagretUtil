@@ -264,7 +264,11 @@ fonction du nombre de colonne de la console """
                            for i in range(0, len(liste_str), nbre_col)]
         str_template = "{:<%i}" % max_len
         for liste in sous_listes_str:
-            str_resultat += "    ".join([str_template.format(s) for s in liste]) + '\n'
+            for s in liste:
+                pad = max_len - len(re.sub('\x1b.*?m', '', s))
+                str_resultat += s + (pad + 4) * ' '
+            str_resultat += '\n'
+            #str_resultat += "".join([str_template.format(s) for s in liste]) + '\n'
         return str_resultat
 
     def str_users(self):

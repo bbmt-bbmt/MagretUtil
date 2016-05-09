@@ -159,6 +159,7 @@ class Machine:
                 self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
                 if w.com_error is not None:
                     self.message_erreur += fix_str(w.com_error.strerror)
+                return None
         return user_logged
 
     def vnc_open(self, computer_name):
@@ -182,8 +183,12 @@ class Machine:
                                        'winvnc.exe -connect ' + computer_name)
 
             login = self.logged()
-            self._run_gui_file(cmd_run, login)
-            self._run_gui_file(cmd_connect, login)
+            if login is not None:
+                self._run_gui_file(cmd_run, login)
+                self._run_gui_file(cmd_connect, login)
+            else:
+                print('Aucun utilisateur connecté')
+                self.vnc_close()
         except PermissionError:
             self.message_erreur += "Vous n'avez pas les droits administrateur\n"
             # logger.error(self.name + ": " + str(p))
@@ -368,8 +373,12 @@ efface les erreurs, met à jour l'état, l'ip """
     def str_logged(self):
         if self.etat == ETEINT:
             return None
-        resultat = self.name + ': '        
-        resultat += Fore.LIGHTGREEN_EX + self.logged() + Fore.RESET
+        resultat = self.name + ': '
+        user_logged = self.logged()
+        if user_logged is not None:
+            resultat += Fore.LIGHTGREEN_EX + user_logged + Fore.RESET
+        else:
+            resultat = None
         return resultat
 
     def str_users(self):
