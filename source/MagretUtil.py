@@ -134,6 +134,9 @@ def main():
     # efface l'écran
     print('\x1b[2J', end='')
 
+    commandes.select(['*'])
+    print('-' * (os.get_terminal_size().columns - 1))
+
     while True:
         param = input('>>>')
         param = _protect_quotes(param)
