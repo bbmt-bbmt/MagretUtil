@@ -292,7 +292,7 @@ Usage:
         for groupe in selected_groupes:
             list_output = ['"%s"::"%s"' % (machine.name, machine.last_output_cmd)
                            for machine in groupe if machine.etat == 1]
-            str_file += "\n".join(list_output)
+            str_file += "\n".join(list_output) + "\n"
         flush_file.write(str_file)
 
     print('flush effectué')

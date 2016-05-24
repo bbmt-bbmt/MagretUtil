@@ -17,7 +17,10 @@ REMOTE_PATH = 'c:\\'
 
 
 def main():
-    pass
+    m = PsExec("DESKTOP-P02")
+    r = m.run_remote_cmd("dir /B")
+    print(r)
+    return
 
 
 def create_file(filename, file_text):

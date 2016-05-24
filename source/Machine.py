@@ -141,7 +141,7 @@ class Machine:
         les droits de l'utilisateur connecté et ainsi pouvoir interagir
         avec le bureau
         """
-        # j'utilise schtask plutot que du wmi car l'impolémentation avec wmi
+        # j'utilise schtask plutot que du wmi car l'implémentation avec wmi
         # repose sur la commande déprécié at
         subprocess.call(['schtasks', '/create', '/tn', 'todel', '/tr', local_file, '/s', self.name, '/ru', login, '/sc', 'ONSTART', '/it', '/f'], stdout=subprocess.DEVNULL)
         subprocess.call(['schtasks', '/run', '/tn', 'todel', '/s', self.name, '/i'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
