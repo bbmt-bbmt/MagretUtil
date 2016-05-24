@@ -362,6 +362,10 @@ Usage:
 
 class VncViewer:
     _vnc = {}
+    # pocess du viewer
+    _vnc['viewer_process'] = None
+    # ref sur la derniere machine qui a eu une session vnc
+    _vnc['old_machine_connection'] = None
 
     def __init__(self):
         raise Exception("Cette classe ne doit pas être instancié")
@@ -384,12 +388,15 @@ class VncViewer:
         try:
             VncViewer._vnc['viewer_process'].kill()
             VncViewer._vnc['viewer_process'] = None
-            VncViewer._vnc = {}
         except (KeyError, AttributeError):
             pass
         finally:
             subprocess.call(["taskkill", "/F", "/IM", "vncviewer.exe"],
                             stderr=subprocess.DEVNULL)
+            try:
+                VncViewer._vnc['old_machine_connection'].vnc_close()
+            except:
+                pass
         return
 
 
@@ -418,6 +425,7 @@ Usage:
         if arg['<machine>']:
             try:
                 VncViewer.open()
+                VncViewer._vnc["old_machine_connection"] = machines_dict[arg['<machine>']]
                 machines_dict[arg['<machine>']].vnc_open(os.getenv('COMPUTERNAME'))
             except KeyError:
                 print("La machine n'existe pas")

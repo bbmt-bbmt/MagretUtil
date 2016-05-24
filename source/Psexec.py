@@ -17,9 +17,6 @@ REMOTE_PATH = 'c:\\'
 
 
 def main():
-    m = PsExec("DESKTOP-P02")
-    r = m.run_remote_cmd("dir /B")
-    print(r)
     return
 
 
@@ -195,9 +192,12 @@ class PsExec:
                 win32wnet.WNetAddConnection2(0, None, unc, None)
         except win32wnet.error as err:
             # deconnecte et reconnect.
-            if err[0] == 1219:
-                win32wnet.WNetCancelConnection2(unc, 0, 0)
-                return self._wnet_connect(self)
+            if err.winerror == 1219:
+                # win32wnet.WNetCancelConnection2(unc, 0, 0)
+                # return self._wnet_connect()
+                # si d'autre connection existe avec le même login
+                # on continue et on essaie de l'utiliser plutôt que de la canceler
+                return
             raise err
 
     def _covert_unc(self, path):
