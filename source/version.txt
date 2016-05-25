@@ -2,6 +2,7 @@ En cours:
 1.Correction d'un bug sur l'erreur 1219 dans psexec
 2.Correction d'un bug sur la fermeture du serveur winvnc lors 
   de l'ouverture d'une nouvelle session vnc
+3.Correction d'un bug dans users add qui faisait planter selected
 
 25/04/2016 MagretUtil v0.2
 1.suppression de l'option * dans wol shutdown et errors (inutile)

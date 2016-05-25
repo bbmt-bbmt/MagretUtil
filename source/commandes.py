@@ -152,9 +152,9 @@ Usage:
 
     for groupe in selected_groupes:
         if arg['add']:
-            groupes = ['Administrateurs'] if arg['<admin>'] == 'admin'\
+            grpes = ['Administrateurs'] if arg['<admin>'] == 'admin'\
                 else ['Utilisateurs']
-            groupe.add_user(arg['<name>'], arg['<password>'], groupes)
+            groupe.add_user(arg['<name>'], arg['<password>'], grpes)
         if arg['del']:
             groupe.del_user(arg['<name>'])
         if arg['show']:
