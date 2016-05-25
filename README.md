@@ -7,6 +7,9 @@ Toutes les versions : [release](https://github.com/bbmt-bbmt/MagretUtil/releases
 
 Lien pour télécharger la version 0.2: [zip-file](https://github.com/bbmt-bbmt/MagretUtil/releases/download/0.2/MagretUtil-v0.2.zip)
 
+lien pour télécharger la dernière version (en cours de test):
+[zip-file](https://github.com/bbmt-bbmt/MagretUtil/releases/download/latest/MagretUtil-v0.3.zip)
+
 
 # liste des commandes disponible
 pour afficher l'aide d'une commande
