@@ -34,6 +34,7 @@ class Machine:
         self.etat = ETEINT
         self.ip = None
         self.mac = None
+        self.tag = False
         self._vnc_uid = None
         self.message_erreur = ""
         self.last_output_cmd = ""
@@ -221,6 +222,10 @@ class Machine:
             self.message_erreur += "le fichier existe déja"
         except PermissionError:
             self.message_erreur += "Vous n'avez pas les droits administrateur\n"
+        except WmiModule.x_wmi as w:
+            self.message_erreur += "erreur wmi: %s \n" % w.info
+            if w.com_error is not None:
+                self.message_erreur += fix_str(w.com_error.strerror)
         finally:
             _psexec = None
         return

@@ -46,6 +46,7 @@ class Groupe:
         self.machines = self._run_threads(init_machine_thread, *names_machines)
         self.dict_machines = {machine.name: machine for machine in self.machines}
         self.machines.sort(key=lambda x: x.name)
+        self.notag()
         logger_info.info("groupe %s créé" % self.name)
         return
 
@@ -172,9 +173,24 @@ class Groupe:
                 pythoncom.CoUninitialize()
             return
 
-        self.run_remote_cmd("dir /B c:\ ")
+        self.run_remote_cmd("dir /B c:\\ ")
         self._run_threads(machine_clean_thread, *self.machines)
         logger_info.info("%s OK" % self.name)
+        return
+
+    def notag(self):
+        def machine_notag_thread(machine):
+            pythoncom.CoInitialize()
+            try:
+                if machine.etat == ALLUME:
+                    for name in machine.last_output_cmd.split():
+                        if re.fullmatch(r'^tag_file_install.txt$', name):
+                            machine.tag = True
+            finally:
+                pythoncom.CoUninitialize()
+            return
+        self.run_remote_cmd("dir /B c:\\ ")
+        self._run_threads(machine_notag_thread, *self.machines)
         return
 
     def wol(self):
@@ -241,7 +257,10 @@ class Groupe:
                 if machine.etat == ETEINT:
                     resultat += machine.name + ' '
                 if machine.etat == ALLUME:
-                    resultat += Fore.LIGHTGREEN_EX + machine.name + Fore.RESET + ' '
+                    if machine.tag == False:
+                        resultat += Fore.LIGHTYELLOW_EX + machine.name + Fore.RESET + ' '
+                    else:
+                        resultat += Fore.LIGHTGREEN_EX + machine.name + Fore.RESET + ' '
             else:
                 resultat += Fore.LIGHTRED_EX + machine.name + Fore.RESET + ' '
 
@@ -262,7 +281,7 @@ fonction du nombre de colonne de la console """
         # on decooupe, chaque element de sous_liste_str correspond à une ligne
         sous_listes_str = [liste_str[i:i + nbre_col]
                            for i in range(0, len(liste_str), nbre_col)]
-        str_template = "{:<%i}" % max_len
+        # str_template = "{:<%i}" % max_len
         for liste in sous_listes_str:
             for s in liste:
                 pad = max_len - len(re.sub('\x1b.*?m', '', s))

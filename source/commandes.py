@@ -75,6 +75,7 @@ Usage:
 def selected(param):
     """Affiche les groupes sélectionnées
 en vert la machine est allumée
+en mauve la machine est allumée mais  n'a pas de tag_file (elle a du être re-installée)
 en gris la machine est éteinte
 en rouge la machine a un message d'erreur (utiliser errors pour l'afficher)
 
@@ -90,7 +91,7 @@ Usage:
         print('Auncun groupe sélectionné')
     else:
         print('-' * (os.get_terminal_size().columns - 1))
-        print("\n".join([m.str_groupe() for m in selected_groupes]).strip())
+        print("\n".join([g.str_groupe() for g in selected_groupes]).strip())
     return
 
 
@@ -532,6 +533,50 @@ Usage:
         print(str_resultat)
     return
 
+def tag(param):
+    """tag les machines selectionnées en posant un fichier txt
+dans c:\
+Cette commande permet d'identifier les machines qui viennent d'être
+re-installées et qui n'ont pas le tag
+
+Usage:
+  tag [help]
+"""
+    global groupes, selected_groupes
+    doc = tag.__doc__
+    arg = docopt2.docopt(doc, argv=param, help=False)
+    if arg['help']:
+        print(doc)
+        return
+    tag_file = open("tag_file_install.txt","w")
+    tag_file.close()
+    for groupe in selected_groupes:
+        groupe.put("tag_file_install.txt", "c:\\")
+        for m in groupe:
+            m.tag = True
+
+    selected([])
+    return
+
+#ef no_tag(param):
+#   """Affiche les machines qui ne sont pas tagger en orange
+#ermet de savoir quelles machines doit être mis à jours après 
+#ne ré-installation
+
+#sage:
+# notag [help]
+#""
+#   global groupes, selected_groupes
+#   doc = notag.__doc__
+#   arg = docopt2.docopt(doc, argv=param, help=False)
+#   if arg['help']:
+#       print(doc)
+#       return
+#   for groupe in selected_groupes:
+#       groupe.notag()
+
+#   selected([])
+#   return
 
 def quit(param):
     global groupes, selected_groupes, machines_dict

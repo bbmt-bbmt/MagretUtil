@@ -78,7 +78,10 @@ class Salle(Groupe):
                 if machine.etat == ETEINT:
                     resultat += str(num_machine) + ' '
                 if machine.etat == ALLUME:
-                    resultat += Fore.LIGHTGREEN_EX + str(num_machine) + Fore.RESET + ' '
+                    if machine.tag == False:
+                        resultat += Fore.LIGHTMAGENTA_EX + str(num_machine) + Fore.RESET + ' '
+                    else:
+                        resultat += Fore.LIGHTGREEN_EX + str(num_machine) + Fore.RESET + ' '
             else:
                 resultat += Fore.LIGHTRED_EX + str(num_machine) + Fore.RESET + ' '
 
