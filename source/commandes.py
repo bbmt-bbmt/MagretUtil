@@ -12,14 +12,18 @@ import getpass
 from Groupe import Groupe
 from colorama import Fore
 
+ALLUME = 1
 
 def select(param):
     """Sélectionne les groupes, utiliser * pour tout selectionner
 En utilisant select reg il est possible d'utiliser une expression régulière
 pour sélectionner les salles
+select notag permet de selectionner toutes les machines non tagger 
+(pour finir une installation avec les logiciels installés depuis le dernier master)
 
 Usage:
   select help
+  select notag
   select reg <expression_reg>
   select <nom>...
 """
@@ -30,6 +34,14 @@ Usage:
     if arg['help']:
         print(doc)
         return
+    if arg['notag']:
+        selected_machines = [m for name, m in machines_dict.items()
+                                 if m.etat == ALLUME and m.tag == False]
+        groupe_autre = Groupe('AUTRES', [])
+        groupe_autre.machines.extend(selected_machines)
+        groupe_autre.machines.sort(key=lambda x: x.name)
+        groupe_autre.dict_machines = {m.name: m for m in selected_machines}
+        selected_groupes = [groupe_autre,]
     if arg['reg']:
         try:
             pattern = re.compile(arg['<expression_reg>'])
@@ -292,7 +304,7 @@ Usage:
     with open("flush.csv", 'w') as flush_file:
         for groupe in selected_groupes:
             list_output = ['"%s"::"%s"' % (machine.name, machine.last_output_cmd)
-                           for machine in groupe if machine.etat == 1]
+                           for machine in groupe if machine.etat == ALLUME]
             str_file += "\n".join(list_output) + "\n"
         flush_file.write(str_file)
 

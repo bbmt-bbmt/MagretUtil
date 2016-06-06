@@ -258,7 +258,7 @@ class Groupe:
                     resultat += machine.name + ' '
                 if machine.etat == ALLUME:
                     if machine.tag == False:
-                        resultat += Fore.LIGHTYELLOW_EX + machine.name + Fore.RESET + ' '
+                        resultat += Fore.LIGHTMAGENTA_EX + machine.name + Fore.RESET + ' '
                     else:
                         resultat += Fore.LIGHTGREEN_EX + machine.name + Fore.RESET + ' '
             else:

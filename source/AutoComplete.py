@@ -39,12 +39,13 @@ def init_auto_complete():
     global machines_dict, groupes
     groupe_name = [g.name for g in groupes]
     machines_name = [name for name in machines_dict]
-    cmd_select = groupe_name + ['help', 'reg'] + machines_name
+    cmd_select = groupe_name + ['help', 'reg', 'notag'] + machines_name
 
     option_tree = {
         "select": cmd_select,
         "selected": ["help"],
         "update": ["help"],
+        "tag": ["help"],
         "users": {
             "add": ["admin"],
             "del": [],
