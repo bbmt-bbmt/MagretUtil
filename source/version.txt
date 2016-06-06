@@ -3,6 +3,10 @@ En cours:
 2.Correction d'un bug sur la fermeture du serveur winvnc lors 
   de l'ouverture d'une nouvelle session vnc
 3.Correction d'un bug dans users add qui faisait planter selected
+4.Ajout de la commande tag
+5.Correction d'un bug de gestion d'erreur dans la commande put
+6.Ajout d'une couleur mauve si la machine n'est pas tagger pour
+  voir plus facilement les machines reinstallées
 
 25/04/2016 MagretUtil v0.2
 1.suppression de l'option * dans wol shutdown et errors (inutile)
