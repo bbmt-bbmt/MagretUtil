@@ -462,6 +462,7 @@ Commandes :
   put: envoie un fichier dans un repertoire de destination sur les machines
   password: demande le mot de passe pour élever ses privilèges
   flush: écrit un fichier csv contenant les résultats de la dernière commande
+  tag: permet de tagger les machines avec un fichier texte
   vnc: lance une session vnc sur la machine sélectionnée
   wol: allume les machines selectionnées
         (un dossier mac doit être crée pour stocker les adresses mac)
@@ -537,7 +538,7 @@ Usage:
     uac = arg['uac']
     try:
         Privilege.get_privilege(domaine['login'], user_pass, domaine['name'], uac)
-        raise SystemExit()
+        raise SystemExit(0)
     except OSError as o:
         str_resultat = Fore.LIGHTRED_EX\
             + "Erreur lors de l'élevation de privilège: "\
@@ -547,9 +548,9 @@ Usage:
 
 def tag(param):
     """tag les machines selectionnées en posant un fichier txt
-dans c:\
+dans c:
 Cette commande permet d'identifier les machines qui viennent d'être
-re-installées et qui n'ont pas le tag
+re-installées et qui n'ont pas le tag. Elles sont de couleur mauve.
 
 Usage:
   tag [help]
@@ -599,7 +600,7 @@ def quit(param):
     selected_groupes.clear()
     machines_dict.clear()
     gc.collect()
-    raise SystemExit
+    raise SystemExit(0)
 
 
 def main():
