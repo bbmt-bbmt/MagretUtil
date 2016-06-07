@@ -24,7 +24,9 @@ Les options entre [] sont facultatives.
 Affiche les salles sélectionnées.
 
 
-vert  -> la machine est allumée
+vert  -> la machine est allumée et taggée
+
+mauve -> la machine est allumée et non taggée
 
 gris  -> la machine est éteinte
 
@@ -34,10 +36,13 @@ rouge -> la machine est en erreur
 Selectionne les salles, machines où les prochaines commandes agiront.
 
 On peut passer une expression régulière
+
+select notag permet de choisir toutes les machines non taggées
 ```
 select salle1 salle2 machine1 machine2
 select *
 select reg .*(1|2)
+select notag
 ```
 
 ## users
@@ -132,6 +137,12 @@ Affiche ou efface les erreurs des machines affichées en rouge
 errors <machine>
 errors
 errors clear
+```
+
+## tag
+tag les machines sélectionnées en mettant un fichier texte sur c:
+```
+tag [help]
 ```
 
 ## wol
