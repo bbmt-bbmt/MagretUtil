@@ -181,11 +181,10 @@ Liste ou désinstalle un programme donné
 Les programmes affichés en vert peuvent être désinstallé directement avec prog uninstall
 Les programmes affichés en rouge nécessitent une commande spécifique. 
 Il faut alors lancer prog uninstall logiciel_rouge puis result nom_machine pour avoir cette commande
-
 ```
 prog list 
 password unistall scratch
-
+```
 
 ## quit
 quitte
