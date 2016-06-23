@@ -5,8 +5,6 @@ Le logiciel est multithreadé par salle.
 
 Toutes les versions : [release](https://github.com/bbmt-bbmt/MagretUtil/releases)
 
-Lien pour télécharger la dernière version (pas encore completement stable): [zip-file](https://github.com/bbmt-bbmt/MagretUtil/releases/download/latest/MagretUtil-v0.3.zip)
-
 lien pour télécharger la dernière version (en cours de test):
 [zip-file](https://github.com/bbmt-bbmt/MagretUtil/releases/download/latest/MagretUtil-v0.3.zip)
 
