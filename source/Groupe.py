@@ -2,9 +2,10 @@
 # coding: utf-8
 
 import os
-import logging
+#import logging
 # from logging.handlers import RotatingFileHandler
 import concurrent.futures
+import threading
 import re
 import difflib
 import pythoncom
@@ -13,14 +14,25 @@ from Machine import REMOTE_PATH
 # from var_global import *
 from colorama import Fore
 import gc
+import sys
 
 
 # logger = logging.getLogger('MagretUtil.Salle')
-logger_info = logging.getLogger('Info')
+#logger_info = logging.getLogger('Info')
 
 # Constantes
 ALLUME = 1
 ETEINT = 0
+
+
+class CounterThread:
+    lock = threading.Lock()
+    i = 0
+
+    def __init__(self):
+        self.count = 0
+        self.lock_count = threading.Lock()
+        return
 
 
 def score_str(str1, str2):
@@ -29,12 +41,17 @@ def score_str(str1, str2):
 
 
 class Groupe:
-    def __init__(self, name, names_machines):
+    def __init__(self, name, names_machines=None):
 
-        def init_machine_thread(nom):
+        def init_machine_thread(nom, counter=None):
             pythoncom.CoInitialize()
             try:
                 m = Machine(nom)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return m
@@ -42,12 +59,14 @@ class Groupe:
         self.name = name
         self.machines = []
         self.dict_machines = {}
-
-        self.machines = self._run_threads(init_machine_thread, *names_machines)
-        self.dict_machines = {machine.name: machine for machine in self.machines}
-        self.machines.sort(key=lambda x: x.name)
-        self.notag()
-        logger_info.info("groupe %s créé" % self.name)
+        if names_machines is not None:
+            counter_thread = CounterThread()
+            self.machines = self._run_threads(init_machine_thread, *names_machines, counter=counter_thread)
+            self.dict_machines = {machine.name: machine for machine in self.machines}
+            self.machines.sort(key=lambda x: x.name)
+            self.notag()
+        #print()
+        #logger_info.info("groupe %s créé" % self.name)
         return
 
     def _run_threads(self, callback, *param, **kwargs):
@@ -64,49 +83,69 @@ class Groupe:
         return result
 
     def add_user(self, login, password, groupes):
-        def add_user_thread(machine, nom, password, groupes):
+        def add_user_thread(machine, nom, password, groupes, counter=None):
             # important pour initialiser les trhead windows
             pythoncom.CoInitialize()
             try:
                 if machine.etat == ALLUME:
+                    machine.last_output_cmd = ''
                     machine.ajouter_user(nom, password, groupes)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return
-
+        counter_thread = CounterThread()
         self._run_threads(add_user_thread, *self.machines, nom=login,
-                          password=password, groupes=groupes)
-
-        logger_info.info("%s OK" % self.name)
+                          password=password, groupes=groupes, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
         return
 
     def del_user(self, login):
-        def del_user_thread(machine, nom):
+        def del_user_thread(machine, nom, counter=None):
             pythoncom.CoInitialize()
             try:
                 if machine.etat == ALLUME:
+                    machine.last_output_cmd = ''
                     machine.supprimer_user(nom)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return
-
-        self._run_threads(del_user_thread, *self.machines, nom=login)
-        logger_info.info("%s OK" % self.name)
+        counter_thread= CounterThread()
+        self._run_threads(del_user_thread, *self.machines, nom=login,counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
         return
 
     def chpwd_user(self, login, password):
-        def chpwd_user_thread(machine, login, password):
+        def chpwd_user_thread(machine, login, password, counter=None):
             pythoncom.CoInitialize()
             try:
                 if machine.etat == ALLUME:
+                    machine.last_output_cmd = ''
                     machine.chpwd_user(login, password)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return
-
+        counter_thread = CounterThread()
         self._run_threads(chpwd_user_thread, *self.machines, login=login,
-                          password=password)
-        logger_info.info("%s OK" % self.name)
+                          password=password, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
         return
 
     def update(self):
@@ -117,65 +156,101 @@ class Groupe:
         self.__init__(self.name, list_names)
         return
 
-    def run_remote_cmd(self, cmd, timeout=None, no_wait_output=False):
-        def machine_remote_cmd_thread(machine, cmd, timeout, no_wait_output):
+    def run_remote_cmd(self, cmd, timeout=None, no_wait_output=False, counter=True):
+        def machine_remote_cmd_thread(machine, cmd, timeout, no_wait_output, counter=None):
             pythoncom.CoInitialize()
-            if machine.etat == ALLUME:
-                machine.run_remote_cmd(cmd, timeout, no_wait_output)
-            pythoncom.CoUninitialize()
+            try:
+                if machine.etat == ALLUME:
+                    machine.last_output_cmd = ''
+                    machine.run_remote_cmd(cmd, timeout, no_wait_output)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
+            finally:
+                pythoncom.CoUninitialize()
             return
-
+        if counter:
+            counter_thread = CounterThread()
+        else:
+            counter_thread = None
         self._run_threads(machine_remote_cmd_thread, *self.machines, cmd=cmd,
-                          timeout=timeout, no_wait_output=no_wait_output)
-        logger_info.info("%s OK" % self.name)
+                          timeout=timeout, no_wait_output=no_wait_output, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
         return
 
     def run_remote_file(self, file, param, timeout, no_wait_output=False):
-        def machine_remote_file_thread(machine, file, param, timeout, no_wait_output):
+        def machine_remote_file_thread(machine, file, param, timeout, no_wait_output, counter=None):
             pythoncom.CoInitialize()
             try:
                 if machine.etat == ALLUME:
+                    machine.last_output_cmd = ''
                     machine.run_remote_file(file, param, timeout,
                                             no_wait_output)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return
-
+        counter_thread = CounterThread()
         self._run_threads(machine_remote_file_thread, *self.machines,
                           file=file, param=param, timeout=timeout,
-                          no_wait_output=no_wait_output)
-        logger_info.info("%s OK" % self.name)
+                          no_wait_output=no_wait_output, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
         return
 
     def put(self, file_path, dir_path):
-        def machine_put_thread(machine, file_path, dir_path):
+        def machine_put_thread(machine, file_path, dir_path, counter=None):
             pythoncom.CoInitialize()
             try:
                 if machine.etat == ALLUME:
+                    machine.last_output_cmd = ''
                     machine.put(file_path, dir_path)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return
-
+        counter_thread = CounterThread()
         self._run_threads(machine_put_thread, *self.machines,
-                          file_path=file_path, dir_path=dir_path)
-        logger_info.info("%s OK" % self.name)
+                          file_path=file_path, dir_path=dir_path, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
 
     def clean(self):
-        def machine_clean_thread(machine):
+        def machine_clean_thread(machine, counter=None):
             pythoncom.CoInitialize()
             try:
                 if machine.etat == ALLUME:
                     for name in machine.last_output_cmd.split():
                         if re.fullmatch(r'^todel[0-9]{1,4}[0-9|a-f]{32}$', name):
                             machine.run_remote_cmd('rd /s /q %s%s' % (REMOTE_PATH, name))
+                    machine.vnc_close()
+                    machine.last_output_cmd = ''
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
+                #machine.registry.close_remote_registry()
             finally:
                 pythoncom.CoUninitialize()
             return
 
         self.run_remote_cmd("dir /B c:\\ ")
-        self._run_threads(machine_clean_thread, *self.machines)
-        logger_info.info("%s OK" % self.name)
+        counter_thread = CounterThread()
+        self._run_threads(machine_clean_thread, *self.machines, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
         return
 
     def notag(self):
@@ -186,10 +261,11 @@ class Groupe:
                     for name in machine.last_output_cmd.split():
                         if re.fullmatch(r'^tag_file_install.txt$', name):
                             machine.tag = True
+                    machine.last_output_cmd = ''
             finally:
                 pythoncom.CoUninitialize()
             return
-        self.run_remote_cmd("dir /B c:\\ ")
+        self.run_remote_cmd("dir /B c:\\ ", counter=False)
         self._run_threads(machine_notag_thread, *self.machines)
         return
 
@@ -200,25 +276,79 @@ class Groupe:
         return
 
     def shutdown(self):
-        def machine_shutdown_thread(machine):
+        def machine_shutdown_thread(machine, counter=None):
             pythoncom.CoInitialize()
             try:
                 if machine.etat == ALLUME:
                     machine.shutdown()
                     machine.etat = ETEINT
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return
-
-        self._run_threads(machine_shutdown_thread, *self.machines)
-        logger_info.info("%s OK" % self.name)
+        counter_thread = CounterThread()
+        self._run_threads(machine_shutdown_thread, *self.machines, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
         return
 
-    def str_logged(self):
-        def str_logged_thread(machine):
+    def uninstall(self, name):
+        def uninstall_thread(machine, name_thread, counter=None):
             pythoncom.CoInitialize()
             try:
+                if machine.etat == ALLUME:
+                    machine.last_output_cmd = ''
+                    machine.uninstall(name)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
+            finally:
+                pythoncom.CoUninitialize()
+            return
+        counter_thread = CounterThread()
+        self._run_threads(uninstall_thread, *self.machines, name_thread=name, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
+        return    
+
+    def str_prog(self, filter=None):
+        def str_prog_thread(machine, filter_thread, counter=None):
+            pythoncom.CoInitialize()
+            try:
+                machine.last_output_cmd = ''
+                machine.str_prog(filter)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
+            finally:
+                pythoncom.CoUninitialize()
+            return
+        counter_thread = CounterThread()
+        self._run_threads(str_prog_thread, *self.machines, filter_thread=filter, counter=counter_thread)
+        print()
+        #logger_info.info("%s OK" % self.name)
+        return
+
+
+    def str_logged(self):
+        def str_logged_thread(machine, counter=None):
+            pythoncom.CoInitialize()
+            try:
+                machine.last_output_cmd = ''
                 str_resultat = machine.str_logged()
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return str_resultat
@@ -227,7 +357,8 @@ class Groupe:
         resultat_threads = []
         str_resultat += Fore.LIGHTCYAN_EX + self.name + '\n' + Fore.RESET
         param = [machine for machine in self.machines]
-        resultat_threads = self._run_threads(str_logged_thread, *param)
+        counter_thread = CounterThread()
+        resultat_threads = self._run_threads(str_logged_thread, *param, counter=counter_thread)
         resultat_threads = list(set(resultat_threads))
         try:
             resultat_threads.remove(None)
@@ -235,7 +366,8 @@ class Groupe:
             # si None n'est pas dans la liste une exception est levée et on pass
             pass
         resultat_threads.sort()
-        logger_info.info("%s OK" % self.name)
+        print()
+        #logger_info.info("%s OK" % self.name)
         str_resultat += self.presentation(resultat_threads)
         return str_resultat
 
@@ -291,10 +423,16 @@ fonction du nombre de colonne de la console """
         return str_resultat
 
     def str_users(self):
-        def str_users_thread(machine):
+        def str_users_thread(machine, counter=None):
             pythoncom.CoInitialize()
             try:
+                machine.last_output_cmd = ''
                 str_resultat = machine.str_users()
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return str_resultat
@@ -303,17 +441,25 @@ fonction du nombre de colonne de la console """
         resultat_threads = []
         str_resultat += Fore.LIGHTCYAN_EX + self.name + '\n' + Fore.RESET
         param = [machine for machine in self.machines]
-        resultat_threads = self._run_threads(str_users_thread, *param)
+        counter_thread = CounterThread()
+        resultat_threads = self._run_threads(str_users_thread, *param, counter=counter_thread)
         resultat_threads.sort()
-        logger_info.info("%s OK" % self.name)
+        print()
+        #logger_info.info("%s OK" % self.name)
         str_resultat += self.presentation(resultat_threads)
         return str_resultat
 
     def str_user_groups(self, user):
-        def str_user_groups_thread(machine, user):
+        def str_user_groups_thread(machine, user, counter=None):
             pythoncom.CoInitialize()
             try:
+                machine.last_output_cmd = ''
                 str_resultat = machine.str_user_groups(user)
+                if counter is not None:
+                    counter.lock_count.acquire()
+                    counter.count = counter.count + 1
+                    sys.stdout.write('\r%s: %s'%(self.name,counter.count))
+                    counter.lock_count.release()
             finally:
                 pythoncom.CoUninitialize()
             return str_resultat
@@ -322,9 +468,11 @@ fonction du nombre de colonne de la console """
         resultat_threads = []
         str_resultat += Fore.LIGHTCYAN_EX + self.name + '\n' + Fore.RESET
 
-        resultat_threads = self._run_threads(str_user_groups_thread, *self.machines, user=user)
+        counter_thread = CounterThread()
+        resultat_threads = self._run_threads(str_user_groups_thread, *self.machines, user=user, counter=counter_thread)
         resultat_threads.sort()
-        logger_info.info("%s OK" % self.name)
+        print()
+        #logger_info.info("%s OK" % self.name)
         str_resultat += self.presentation(resultat_threads)
         return str_resultat
 

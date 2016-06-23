@@ -30,7 +30,6 @@ def get_privilege(login, password, domaine=None, uac=False):
                             'cmd.exe /C "cd /D \"%s\" & \"%s\" %s"' % (os.getcwd(), sys.argv[0], pass_uac),
                             lpStartupInfo=lpStartupInfo)
 
-
 def pass_uac():
     ShellExecuteEx(nShow=win32con.SW_SHOWNORMAL, fMask=shellcon.SEE_MASK_NOCLOSEPROCESS, lpVerb='runas', lpFile=sys.argv[0])
     return

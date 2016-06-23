@@ -126,14 +126,17 @@ Usage:
     # pour le groupe AUTRES on utilise la fonction update de la classe machine
     # le groupe AUTRES n'a pas été soumis au thread
     for groupe in selected_groupes:
-        if groupe.name != 'AUTRES':
-            machines_dict.clear()
-            groupe.update()
-            machines_dict.update({machine.name: machine for s in groupes
-                                  for machine in s})
-        else:
-            for m in groupe:
-                m.update_etat()
+        machines_dict.clear()
+        groupe.update()
+        machines_dict.update({machine.name: machine for s in groupes
+                              for machine in s})
+        #if groupe.name != 'AUTRES':
+        #    groupe.update()
+        #    machines_dict.update({machine.name: machine for s in groupes
+        #                          for machine in s})
+        #else:
+        #    for m in groupe:
+        #        m.update_etat()
         gc.collect()
     selected([])
     return
@@ -169,6 +172,7 @@ Usage:
                 else ['Utilisateurs']
             groupe.add_user(arg['<name>'], arg['<password>'], grpes)
         if arg['del']:
+
             groupe.del_user(arg['<name>'])
         if arg['show']:
             str_resultat += groupe.str_users()
@@ -181,7 +185,7 @@ Usage:
 
     if str_resultat != '':
         print('-' * (os.get_terminal_size().columns - 1))
-        print(str_resultat.strip())
+        print(str_resultat.strip().encode("cp850","replace").decode("cp850","replace"))
     else:
         selected([])
     return
@@ -189,7 +193,6 @@ Usage:
 
 def run(param):
     """Execute une commande ou un fichier à distance
-run result permet d'afficher le résultat de la derniere commande exécutée
 run file permet de lancer un executable à distance
 run clear nettoie les repertoires laissés sur la machine
 (arrive si le programme plante ou lors de l'utilisation
@@ -198,7 +201,6 @@ de l'option --no-wait)
 Usage:
   run cmd <commande> [<parametre>...] [--param=<param>] [--timeout=t] [--no-wait]
   run file <nom_fichier> [<option>...] [--param=<param>] [--timeout=t] [--no-wait]
-  run result <machine>
   run clean
   run help
 
@@ -236,14 +238,6 @@ Options:
                                    timeout,
                                    arg["--no-wait"])
         selected([])
-    if arg['result']:
-        if arg['<machine>'] in machines_dict.keys():
-            str_resultat = machines_dict[arg['<machine>']].last_output_cmd \
-                if machines_dict[arg['<machine>']].last_output_cmd != "" \
-                else "Aucun resultat à afficher"
-            print(str_resultat.strip())
-        else:
-            print("%s n'existe pas" % arg['<machine>'])
     if arg['clean']:
         for groupe in selected_groupes:
             groupe.clean()
@@ -253,6 +247,87 @@ Options:
         selected([])
     return
 
+def result(param):
+    """afficher le résultat de la derniere commande exécutée
+
+Usage:
+  result help
+  result mix
+  result <machine>
+  """
+    global groupes, selected_groupes, machines_dict
+
+    doc = result.__doc__
+    arg = docopt2.docopt(doc, argv=param, help=False)
+    if arg['help']:
+        print(doc)
+        return
+    if arg['mix']:
+        list_result = []
+        selected_machines = [m for g in selected_groupes for m in g]
+        for m in selected_machines:
+            list_result.extend(m.last_output_cmd.split("\n"))
+        set_result = set(list_result)
+        list_result = list(set_result)
+        list_result.sort(key=lambda s: s.lower())
+        str_result = "\n".join(list_result)
+        print(str_result.encode("cp850","replace").decode("cp850","replace"))
+        return
+
+    if arg['<machine>'] in machines_dict.keys():
+        str_resultat = machines_dict[arg['<machine>']].last_output_cmd \
+            if machines_dict[arg['<machine>']].last_output_cmd != "" \
+            else "Aucun resultat à afficher"
+        print(str_resultat.strip().encode("cp850","replace").decode("cp850","replace"))
+    else:
+        print("%s n'existe pas" % arg['<machine>'])
+    return
+
+def prog(param):
+    """permet d'agir sur les programmes installés des machines
+il faut utiliser la commande result pour voir le résultat
+de la commande
+prog uninstall: désinstalle un programme
+prog list: liste les programmes. Si un filtre est donné, n'affiche que les
+programmes qui contiennent le filtre
+les logiciels affichés en vert peuvent être désinstallé avec prog uninstall
+les logiciels affichés en rouge nécessite une commande particulière
+après avoir lancé prog uninstall, utiliser la commande result pour
+afficher la commande de desinstallation
+
+Usage:
+  prog help
+  prog list [<filter>]
+  prog uninstall <logiciel>
+  prog uninstall --name=<name>
+
+Options
+  --name=<name>  permet de donner le nom du logiciel si il y a des espace.
+                 Il faut utiliser le nom entre ""
+"""
+    global groupes, selected_groupes, machines_dict
+
+    doc = prog.__doc__
+    arg = docopt2.docopt(doc, argv=param, help=False)
+    if arg['help']:
+        print(doc)
+        return
+    if arg['list']:
+        print("Cette commande peut prendre du temps pour se terminer")
+        print("Si le programme a desinstaller était rouge dans prog list")
+        print("Utiliser la commande result pour afficher la commande spécifique pour desinstaller")
+        print("(Utiliser run cmd pour lancer cette commande)")
+        print("(Pour une desinstallation silencieuse penser à /S ou /silent)")
+        for group in selected_groupes:
+            group.str_prog(arg['<filter>'])
+    if arg['uninstall']:
+        for group in selected_groupes:
+            if arg['<logiciel>']:
+                group.uninstall(arg['<logiciel>'])
+            if arg['--name']:
+                group.uninstall(arg['--name'].strip('"'))
+    selected([])
+    return
 
 def cmp(param):
     """Compare le resultat de la commande run par rapport au resultat
@@ -457,6 +532,8 @@ Commandes :
   users: commande pour manipuler les utilisateurs locaux
   update: met à jours les groupes sélectionnées
   run: execute une commande à distance
+  result: affiche le résultat de la dernière commande d'une machine donnée
+  prog: liste les logiciels et peut désinstaller un programme donnée.
   cmp: compare les résultats d'une commande run
   errors: affiche les erreurs des machines en rouge
   put: envoie un fichier dans un repertoire de destination sur les machines
@@ -506,7 +583,7 @@ Usage:
                 machines_dict[arg['<machine>']].message_erreur
         except KeyError:
             str_resultat = "Le poste n'existe pas"
-    print(str_resultat.strip())
+    print(str_resultat.strip().encode("cp850","replace").decode("cp850","replace"))
     return
 
 
@@ -538,12 +615,12 @@ Usage:
     uac = arg['uac']
     try:
         Privilege.get_privilege(domaine['login'], user_pass, domaine['name'], uac)
-        raise SystemExit(0)
+        #raise SystemExit(0)
     except OSError as o:
         str_resultat = Fore.LIGHTRED_EX\
             + "Erreur lors de l'élevation de privilège: "\
             + fix_str(o.strerror) + Fore.RESET
-        print(str_resultat)
+        print(str_resultat.encode("cp850","replace").decode("cp850","replace"))
     return
 
 def tag(param):
@@ -570,26 +647,6 @@ Usage:
 
     selected([])
     return
-
-#ef no_tag(param):
-#   """Affiche les machines qui ne sont pas tagger en orange
-#ermet de savoir quelles machines doit être mis à jours après 
-#ne ré-installation
-
-#sage:
-# notag [help]
-#""
-#   global groupes, selected_groupes
-#   doc = notag.__doc__
-#   arg = docopt2.docopt(doc, argv=param, help=False)
-#   if arg['help']:
-#       print(doc)
-#       return
-#   for groupe in selected_groupes:
-#       groupe.notag()
-
-#   selected([])
-#   return
 
 def quit(param):
     global groupes, selected_groupes, machines_dict

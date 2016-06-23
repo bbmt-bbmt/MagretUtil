@@ -6,7 +6,6 @@ import re
 import os
 from var_global import *
 
-
 class Completer:
     """Classe qui fournit la fonction complete à readline
     la fonction walk est récursive et cyclique pour parcourir
@@ -28,6 +27,8 @@ class Completer:
                 return self.walk(words[1:], tree)
             if words[0] in tree.keys():
                 return self.walk(words[1:], tree[words[0]])
+            else:
+                return []
 
     def complete(self, text, state):
         words = readline.get_line_buffer().split()
@@ -63,6 +64,12 @@ def init_auto_complete():
             "clean": [],
             "help": []
         },
+        "prog": {
+            "list": [],
+            "help": [],
+            "uninstall": ["--name"]
+        },
+        "result": ["help", "mix"] + machines_name,
         "cmp": ["help", "--seuil"] + machines_name,
         "errors": ["clear", "help"] + machines_name,
         "put": ["help"],
@@ -74,6 +81,10 @@ def init_auto_complete():
         "help": [],
         "vnc": ['help', "close"] + machines_name
     }
+
+    alias_cmd = lire_alias_ini()
+    for key in alias_cmd:
+        option_tree[key] = []
 
     readline.parse_and_bind('tab: complete')
     completer = Completer(option_tree)

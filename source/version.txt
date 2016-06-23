@@ -8,6 +8,7 @@ En cours:
 6.Ajout d'une couleur mauve si la machine n'est pas tagger pour
   voir plus facilement les machines reinstallées
 7.Ajout de la commande select notag pour selectionner les machines sans tag
+8.Ajout de la commande prog qui permet de lister et de desinstaller un prog
 
 25/04/2016 MagretUtil v0.2
 1.suppression de l'option * dans wol shutdown et errors (inutile)

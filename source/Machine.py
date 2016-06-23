@@ -1,6 +1,8 @@
 #! python3
 # coding: utf-8
 
+#import registry
+import winreg
 import socket
 import struct
 import win32net
@@ -10,6 +12,7 @@ import wmi as WmiModule
 import re
 import os
 import subprocess
+import time
 # import logging
 import Psexec
 
@@ -23,6 +26,39 @@ from var_global import fix_str
 ALLUME = 1
 ETEINT = 0
 REMOTE_PATH = 'c:\\'
+SUB_KEY64 = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+SUB_KEY32 = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+
+def walk_reg_prog(connect, sub_key):
+    result_dict = {}
+    winreg_sub_key = winreg.OpenKey(connect, sub_key, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+    try:
+        i = 0
+        while True:
+            str_key = winreg.EnumKey(winreg_sub_key, i)
+            key_prog = winreg.OpenKey(connect, sub_key + "\\" + str_key, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+            try:
+                j = 0
+                name_prog = None
+                uninstall = None
+                while True:
+                    name, value, id_number = winreg.EnumValue(key_prog, j)
+                    if name == "DisplayName":
+                        name_prog = value
+                    if name == "UninstallString":
+                        uninstall = value
+                    if name_prog and uninstall:
+                        break
+                    j = j + 1
+                if name_prog and uninstall:
+                    result_dict[name_prog] = uninstall
+            except OSError:
+                pass
+            i = i + 1
+    except OSError:
+        pass
+    return result_dict
+
 
 
 class Machine:
@@ -36,6 +72,8 @@ class Machine:
         self.mac = None
         self.tag = False
         self._vnc_uid = None
+        self.prog32 = None
+        self.prog64 = None
         self.message_erreur = ""
         self.last_output_cmd = ""
         self.update_etat()
@@ -118,7 +156,7 @@ class Machine:
             result, output_data = _psexec.run_remote_file(file, param, timeout,
                                                           no_wait_output)
             if result == 0:
-                self.last_output_cmd = output_data
+                self.last_output_cmd = fix_str(output_data)
             else:
                 self.message_erreur += "Le fichier %s n'a pas pu être lancé à distance\n" % file
         except PermissionError:
@@ -280,14 +318,97 @@ class Machine:
                 pass
         return
 
+    def open_remote_registry(self):
+        if self.etat == ETEINT:
+            return
+        try:
+            wmi_connect = WmiModule.WMI(self.name)
+            remote_registry = wmi_connect.Win32_Service(name="RemoteRegistry")[0]
+            remote_registry.StartService()
+        except WmiModule.x_wmi as w:
+            self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
+            if w.com_error is not None:
+                self.message_erreur += fix_str(w.com_error.strerror)
+        return
+
     def update_etat(self):
         """met à jour la machine :
 efface les erreurs, met à jour l'état, l'ip """
         self.message_erreur = ''
         self.last_output_cmd = ''
+        self.prog32 = {}
+        self.prog64 = {}
         self.ping()
         self.init_mac()
+        self.open_remote_registry()
         return
+
+    def connect_registry(self):
+        try:
+            wmi_connect = WmiModule.WMI(self.name)
+        except WmiModule.x_wmi as w:
+            self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
+            if w.com_error is not None:
+                self.message_erreur += fix_str(w.com_error.strerror)
+                
+        timeout = time.time() + 3
+        remote_running = False
+        HKLM = None
+        # boucle avec timout pour être sur que l'accès à distance est bon
+        while time.time() < timeout:
+            try:
+                HKLM = winreg.ConnectRegistry(self.name, winreg.HKEY_LOCAL_MACHINE)
+            except Exception:
+                break
+            remote_registry = wmi_connect.Win32_Service(name="RemoteRegistry")[0]
+            if remote_registry.State == "Running":
+                remote_running = True
+                break
+        if remote_running is False:
+            self.message_erreur += "Le registre n'est pas accessible à distance"
+        return HKLM
+
+
+    #def list_prog32(self, filter=None):
+    #    if self.registry is None:
+    #        self.message_erreur += "pas de connection au registre, lancer la commande update"
+    #        return
+    #    try:
+    #        self.prog32 = self.registry.get_prog32(filter)
+    #    except WmiModule.x_wmi as w:
+    #            self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
+    #            if w.com_error is not None:
+    #                self.message_erreur += fix_str(w.com_error.strerror)
+    #    except Exception as e:
+    #        self.message_erreur += "erreur lors de la connection au registre\n" + str(e) + '\n'
+    #    return self.prog32
+
+    #def list_prog64(self, filter=None):
+    #    if self.registry is None:
+    #        self.message_erreur += "pas de connection au registre, lancer la commande update"
+    #        return
+    #    try:
+    #        self.prog64 = self.registry.get_prog64(filter)
+    #    except WmiModule.x_wmi as w:
+    #            self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
+    #            if w.com_error is not None:
+    #                self.message_erreur += fix_str(w.com_error.strerror)
+    #    except Exception as e:
+    #        self.message_erreur += "erreur lors de la connection au registre\n" + str(e) + '\n'
+    #    return self.prog64
+
+    def list_prog(self, filter):
+        HKLM = self.connect_registry()
+        if HKLM is None:
+            return ()
+        result_prog32 = walk_reg_prog(HKLM, SUB_KEY32)
+        if filter is not None:
+            result_prog32 = {key: value for key, value in result_prog32.items() if filter.lower() in key.lower()}
+        result_prog64 = walk_reg_prog(HKLM, SUB_KEY64)
+        if filter is not None:
+            result_prog64 = {key: value for key, value in result_prog64.items() if filter.lower() in key.lower()}
+        
+        return (result_prog32,result_prog64)
 
     def lister_users(self):
         """liste les utilisateurs et retourne un tableau {nom_user:état}
@@ -375,6 +496,58 @@ efface les erreurs, met à jour l'état, l'ip """
             # logger.error(self.name + ": " + log_erreur)
         return
 
+    def uninstall(self, name):
+        prog_3264 = self.list_prog(name)
+        prog = prog_3264[0].copy()
+        prog.update(prog_3264[1])
+        #if not prog:
+        #    return
+        if len(prog) !=1 or not prog:
+            self.message_erreur += "erreur dans le nom du programme à desinstaller\n"
+            self.message_erreur += "le nom peut correspondre à plusieur programme ou le nom n'existe pas\n"
+            return
+        for prog_name, cmd_uninstall in prog.items():
+            pass
+        if "msiexec" not in cmd_uninstall.lower():
+            self.last_output_cmd = cmd_uninstall
+        else:
+            try:
+                uid_prog = re.findall(r"\{[a-zA-Z0-9-]*\}", cmd_uninstall)[0]
+            except IndexError:
+                self.message_erreur = "impossible de desinstaller le logiciel"
+            self.run_remote_cmd("msiexec.exe /qn /x " + uid_prog, no_wait_output=True)
+        return
+
+    def str_prog(self, filter=None):
+        if self.etat == ETEINT:
+            return None
+        prog = self .list_prog(filter)
+        if not prog:
+            return
+        self.last_output_cmd = "PROGRAMMES 32b:\n"
+        prog32 = prog[0]
+        prog64 = prog[1]
+        #les variables suivantes servent à afficher les résultats du dict dans l'ordre
+        lprog32 = list(prog32)
+        lprog32.sort(key=lambda x: x.lower())
+        lprog64 = list(prog64)
+        lprog64.sort(key=lambda x: x.lower())
+        for prog in lprog32:
+            if "msiexec" in prog32[prog].lower():
+                self.last_output_cmd += Fore.LIGHTGREEN_EX + prog + Fore.RESET + "\n"
+            else:
+                self.last_output_cmd += Fore.LIGHTRED_EX + prog + Fore.RESET + "\n"
+
+        self.last_output_cmd += "PROGRAMMES 64b:\n"
+        for prog in lprog64:
+            if "msiexec" in prog64[prog].lower():
+                self.last_output_cmd += Fore.LIGHTGREEN_EX + prog + Fore.RESET + "\n"
+            else:
+                self.last_output_cmd += Fore.LIGHTRED_EX + prog + Fore.RESET + "\n"
+        #je n'utilise pas fix_str içi car je suis tombé un jour sur un logiciel avec 
+        # des caractère chinois (mblock)
+        return self.last_output_cmd
+
     def str_logged(self):
         if self.etat == ETEINT:
             return None
@@ -420,10 +593,27 @@ efface les erreurs, met à jour l'état, l'ip """
                 resultat += group + ' '
         return resultat
 
+#    def __del__(self):
+#        try:
+#            if self.etat == ALLUME:    
+#                registry.RegistryProg.close_remote_registry(self.name)
+#                self.vnc_close()
+#        except WmiModule.x_wmi as w:
+#                self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
+#                if w.com_error is not None:
+#                    self.message_erreur += fix_str(w.com_error.strerror)
+#        return
+
 
 def main():
-    m = Machine('DESKTOP-P01')
-    m.vnc_open('DESKTOP-P01')
+    import colorama
+    colorama.init()
+    m = Machine('SDE-P04')
+    print(m.str_prog("scratch"))
+    m.uninstall("scratch")
+    print(m.str_prog("scratch"))
+
+    #print(m.last_output_cmd)
     pass
 
 if __name__ == '__main__':

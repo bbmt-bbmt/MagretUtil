@@ -91,10 +91,6 @@ Lancer un executable:
 ```
 run file <nom_fichier> [<option>...] [--param=<param>] [--timeout=t] [--no-wait]
 ```
-Afficher le résultat de la dernière commande d'une machine
-```
-run result <machine>
-```
 Nettoyer le dossier resté sur la machine lors d'erreurs ou de l'utilisation de --no-wait
 ```
 run clean
@@ -106,6 +102,14 @@ Explications des options:
 --no-wait        si l'option est spécifiée, on n'attend pas la réponse de la commande
 --param=<param>  permet de passer des parametres avec un tiret.
                  On peut utiliser les "" pour passer plusieurs parametres
+```
+
+## result
+Afficher le résultat de la dernière commande d'une machine
+result mix affiche le resultat de toutes les machines mélangés sans doublon
+```
+result <machine>
+result mix
 ```
 
 ## cmp
@@ -172,6 +176,17 @@ password
 password uac
 ```
 
+## prog
+Liste ou désinstalle un programme donné
+Les programmes affichés en vert peuvent être désinstallé directement avec prog uninstall
+Les programmes affichés en rouge nécessitent une commande spécifique. 
+Il faut alors lancer prog uninstall logiciel_rouge puis result nom_machine pour avoir cette commande
+
+```
+prog list 
+password unistall scratch
+
+
 ## quit
 quitte
 
@@ -194,7 +209,7 @@ run cmd ipconfig|findstr /R "Passerelle"
 ```
 On affiche le résultat de la commande du poste SDE-P01:
 ```
-run result SDE-P01
+result SDE-P01
 ```
 On compare le resultat avec les machines selectionnées:
 ```
@@ -212,4 +227,11 @@ On affiche les erreurs éventuelles:
 ```
 errors
 ```
+On recherche les programmes installés puis on les affichent:
+```
+prog list
+result SDE-P01
+```
+
+
 

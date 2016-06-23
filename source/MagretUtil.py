@@ -1,5 +1,12 @@
 #! python3
 # coding: utf-8
+#todo
+# multithreader par machine
+#counter en %
+#nettoyer le code
+#corriger affichage lors d'uninstall rouge
+#erreur lors de init par thread pour les numero
+
 
 import os
 import sys
@@ -30,13 +37,14 @@ stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.INFO)
 logger_info.addHandler(stream_handler)
 
-from Machine import Machine
+#from Machine import Machine
 from Groupe import Groupe
 from Salle import Salle
 import commandes
 from var_global import *
 import Privilege
 import AutoComplete
+# import alias
 
 
 def _protect_quotes(text):
@@ -59,7 +67,7 @@ def lire_fichier_ini(fichier):
         config.read(fichier, encoding="utf-8-sig")
     except configparser.Error as e:
         print("erreur lors de l'initialisation du fichier ini : ")
-        raise SystemExit
+        raise SystemExit(0)
 
     groupes_dict = {}
     groupes_dict['GroupesMagret'] = {}
@@ -79,7 +87,7 @@ def lire_fichier_ini(fichier):
     except Exception as e:
         print('Erreur de lecture du fichier config')
         logger.critical(e)
-        raise SystemExit()
+        raise SystemExit(0)
 
     domaine['name'] = config.get('Domaine', 'domaine', fallback=None)
     domaine['login'] = config.get('Domaine', 'login', fallback=None)
@@ -106,6 +114,19 @@ def init_groupes(ini_groupes):
     machines_dict.update({machine.name: machine for g in groupes for machine in g})
     return
 
+def init_groupes2(ini_groupes):
+    global groupes, selected_groupes, machines_dict
+    groupes_machines = {}
+    for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
+        num = len(str(nbre)) if nbre >= 10 else 2
+        str_template = '%s-P%0--i'.replace('--', str(num))
+        noms_machines = [str_template % (ini_salle, i) for i in range(1, nbre + 1)]
+        groupes_machines[ini_salle] = noms_machines
+    for ini_groupe, list_machines in ini_groupes['Groupes'].items():
+        list_machines = list_machines.split(',')
+        groupes_machines[ini_groupe] = list_machines
+    print(groupes_machines)
+    return
 
 def main():
     global domaine, machines_dict
@@ -124,7 +145,13 @@ def main():
     # Si une demande de bypasser l'uac est demandé, on lance la procédure
     if sys.argv[1:] and sys.argv[1] == "pass_uac":
         Privilege.pass_uac()
-        raise SystemExit()
+        raise SystemExit(0)
+
+    #init_groupes2(ini_groupes)
+    #os.system("pause")
+
+    logger_info.info('Création des alias')
+    alias_cmd = lire_alias_ini()
 
     logger_info.info('Initialisation des salles :')
     init_groupes(ini_groupes)
@@ -144,8 +171,13 @@ def main():
         param = param.split(' ')
         param = _remove_protect_char(param)
         cmd = param[0]
+        if cmd in alias_cmd:
+            param = _protect_quotes(alias_cmd[cmd])
+            param = param.strip()
+            param = param.split(' ')
+            param = _remove_protect_char(param)
+            cmd = param[0]
         param.remove(cmd)
-
         cmd = cmd.lower()
         cmd_funct = getattr(commandes, cmd, commandes.help)
         try:
