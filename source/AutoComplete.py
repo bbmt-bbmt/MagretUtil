@@ -6,6 +6,7 @@ import re
 import os
 from var_global import *
 
+
 class Completer:
     """Classe qui fournit la fonction complete à readline
     la fonction walk est récursive et cyclique pour parcourir
@@ -67,7 +68,7 @@ def init_auto_complete():
         "prog": {
             "list": [],
             "help": [],
-            "uninstall": ["--name"]
+            "uninstall": []
         },
         "result": ["help", "mix"] + machines_name,
         "cmp": ["help", "--seuil"] + machines_name,

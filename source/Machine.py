@@ -1,7 +1,6 @@
 #! python3
 # coding: utf-8
 
-#import registry
 import winreg
 import socket
 import struct
@@ -29,14 +28,18 @@ REMOTE_PATH = 'c:\\'
 SUB_KEY64 = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
 SUB_KEY32 = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
 
+
 def walk_reg_prog(connect, sub_key):
     result_dict = {}
-    winreg_sub_key = winreg.OpenKey(connect, sub_key, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+    winreg_sub_key = winreg.OpenKey(connect, sub_key,
+                                    access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
     try:
         i = 0
         while True:
             str_key = winreg.EnumKey(winreg_sub_key, i)
-            key_prog = winreg.OpenKey(connect, sub_key + "\\" + str_key, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+            key_prog = winreg.OpenKey(connect,
+                                      sub_key + "\\" + str_key,
+                                      access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
             try:
                 j = 0
                 name_prog = None
@@ -58,7 +61,6 @@ def walk_reg_prog(connect, sub_key):
     except OSError:
         pass
     return result_dict
-
 
 
 class Machine:
@@ -230,7 +232,6 @@ class Machine:
                 self.vnc_close()
         except PermissionError:
             self.message_erreur += "Vous n'avez pas les droits administrateur\n"
-            # logger.error(self.name + ": " + str(p))
         except FileNotFoundError as f:
             self.message_erreur += "Le fichier %s n'existe pas" % f.filename
         finally:
@@ -247,7 +248,6 @@ class Machine:
                             stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         except PermissionError:
             self.message_erreur += "Vous n'avez pas les droits administrateur\n"
-            # logger.error(self.name + ": " + str(p))
         finally:
             self._vnc_uid = None
         return
@@ -350,7 +350,6 @@ efface les erreurs, met à jour l'état, l'ip """
             self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
             if w.com_error is not None:
                 self.message_erreur += fix_str(w.com_error.strerror)
-                
         timeout = time.time() + 3
         remote_running = False
         HKLM = None
@@ -368,47 +367,19 @@ efface les erreurs, met à jour l'état, l'ip """
             self.message_erreur += "Le registre n'est pas accessible à distance"
         return HKLM
 
-
-    #def list_prog32(self, filter=None):
-    #    if self.registry is None:
-    #        self.message_erreur += "pas de connection au registre, lancer la commande update"
-    #        return
-    #    try:
-    #        self.prog32 = self.registry.get_prog32(filter)
-    #    except WmiModule.x_wmi as w:
-    #            self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
-    #            if w.com_error is not None:
-    #                self.message_erreur += fix_str(w.com_error.strerror)
-    #    except Exception as e:
-    #        self.message_erreur += "erreur lors de la connection au registre\n" + str(e) + '\n'
-    #    return self.prog32
-
-    #def list_prog64(self, filter=None):
-    #    if self.registry is None:
-    #        self.message_erreur += "pas de connection au registre, lancer la commande update"
-    #        return
-    #    try:
-    #        self.prog64 = self.registry.get_prog64(filter)
-    #    except WmiModule.x_wmi as w:
-    #            self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
-    #            if w.com_error is not None:
-    #                self.message_erreur += fix_str(w.com_error.strerror)
-    #    except Exception as e:
-    #        self.message_erreur += "erreur lors de la connection au registre\n" + str(e) + '\n'
-    #    return self.prog64
-
     def list_prog(self, filter):
         HKLM = self.connect_registry()
         if HKLM is None:
             return ()
         result_prog32 = walk_reg_prog(HKLM, SUB_KEY32)
         if filter is not None:
-            result_prog32 = {key: value for key, value in result_prog32.items() if filter.lower() in key.lower()}
+            result_prog32 = {key: value for key, value in result_prog32.items()
+                             if filter.lower() in key.lower()}
         result_prog64 = walk_reg_prog(HKLM, SUB_KEY64)
         if filter is not None:
-            result_prog64 = {key: value for key, value in result_prog64.items() if filter.lower() in key.lower()}
-        
-        return (result_prog32,result_prog64)
+            result_prog64 = {key: value for key, value in result_prog64.items()
+                             if filter.lower() in key.lower()}
+        return (result_prog32, result_prog64)
 
     def lister_users(self):
         """liste les utilisateurs et retourne un tableau {nom_user:état}
@@ -463,12 +434,12 @@ efface les erreurs, met à jour l'état, l'ip """
 
         for groupe in groupes:
             try:
-                win32net.NetLocalGroupAddMembers(self.name, groupe, 3, [{'domainandname': login}])
+                win32net.NetLocalGroupAddMembers(self.name, groupe, 3,
+                                                 [{'domainandname': login}])
             except pywintypes.error as error:
                 log_erreur = "Erreur lors de l'attribution du groupe "\
                              + groupe + " : " + fix_str(error.strerror)
                 self.message_erreur += log_erreur + "\n"
-                # logger.error(self.name + ": " + log_erreur)
         return
 
     def supprimer_user(self, login):
@@ -479,7 +450,6 @@ efface les erreurs, met à jour l'état, l'ip """
             log_erreur = "Erreur lors de la suppression de l'utilisateur "\
                          + login + " : " + fix_str(error.strerror)
             self.message_erreur += log_erreur + "\n"
-            # logger.error(self.name + ": " + log_erreur)
         return
 
     def chpwd_user(self, login, password):
@@ -493,16 +463,13 @@ efface les erreurs, met à jour l'état, l'ip """
             log_erreur = "Erreur lors du changement de password de l'utilisateur "\
                          + login + " : " + fix_str(error.strerror)
             self.message_erreur += log_erreur + "\n"
-            # logger.error(self.name + ": " + log_erreur)
         return
 
     def uninstall(self, name):
         prog_3264 = self.list_prog(name)
         prog = prog_3264[0].copy()
         prog.update(prog_3264[1])
-        #if not prog:
-        #    return
-        if len(prog) !=1 or not prog:
+        if len(prog) != 1 or not prog:
             self.message_erreur += "erreur dans le nom du programme à desinstaller\n"
             self.message_erreur += "le nom peut correspondre à plusieur programme ou le nom n'existe pas\n"
             return
@@ -527,7 +494,7 @@ efface les erreurs, met à jour l'état, l'ip """
         self.last_output_cmd = "PROGRAMMES 32b:\n"
         prog32 = prog[0]
         prog64 = prog[1]
-        #les variables suivantes servent à afficher les résultats du dict dans l'ordre
+        # les variables suivantes servent à afficher les résultats du dict dans l'ordre
         lprog32 = list(prog32)
         lprog32.sort(key=lambda x: x.lower())
         lprog64 = list(prog64)
@@ -544,8 +511,9 @@ efface les erreurs, met à jour l'état, l'ip """
                 self.last_output_cmd += Fore.LIGHTGREEN_EX + prog + Fore.RESET + "\n"
             else:
                 self.last_output_cmd += Fore.LIGHTRED_EX + prog + Fore.RESET + "\n"
-        #je n'utilise pas fix_str içi car je suis tombé un jour sur un logiciel avec 
+        # je n'utilise pas fix_str içi car je suis tombé un jour sur un logiciel avec
         # des caractère chinois (mblock)
+        # c'est le groupe qui utilisera encode decode avec replace ou ignore
         return self.last_output_cmd
 
     def str_logged(self):
@@ -593,17 +561,6 @@ efface les erreurs, met à jour l'état, l'ip """
                 resultat += group + ' '
         return resultat
 
-#    def __del__(self):
-#        try:
-#            if self.etat == ALLUME:    
-#                registry.RegistryProg.close_remote_registry(self.name)
-#                self.vnc_close()
-#        except WmiModule.x_wmi as w:
-#                self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
-#                if w.com_error is not None:
-#                    self.message_erreur += fix_str(w.com_error.strerror)
-#        return
-
 
 def main():
     import colorama
@@ -613,7 +570,7 @@ def main():
     m.uninstall("scratch")
     print(m.str_prog("scratch"))
 
-    #print(m.last_output_cmd)
+    # print(m.last_output_cmd)
     pass
 
 if __name__ == '__main__':

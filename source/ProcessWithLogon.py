@@ -1,4 +1,5 @@
 import ctypes
+from ctypes.wintypes import WORD, DWORD, LPSTR, HANDLE
 
 NULL  = 0
 TRUE  = 1
@@ -6,11 +7,11 @@ FALSE = 0
 
 INVALID_HANDLE_VALUE = -1
 
-WORD   = ctypes.c_ushort
-DWORD  = ctypes.c_uint
-LPSTR  = ctypes.c_char_p
-LPBYTE = LPSTR
-HANDLE = DWORD
+#WORD   = ctypes.c_ushort
+#DWORD  = ctypes.c_uint
+#LPSTR  = ctypes.c_char_p
+#LPBYTE = LPSTR
+#HANDLE = DWORD
 
 # typedef struct _PROCESS_INFORMATION {
 #     HANDLE hProcess;

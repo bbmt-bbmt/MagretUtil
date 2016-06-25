@@ -26,9 +26,9 @@ def get_privilege(login, password, domaine=None, uac=False):
     if uac:
         pass_uac = 'pass_uac'
         lpStartupInfo.dwFlags = win32con.STARTF_USESHOWWINDOW
+    cmd = 'cmd.exe /C "cd /D \"%s\" & \"%s\" %s"' % (os.getcwd(), sys.argv[0], pass_uac)
     CreateProcessWithLogonW(login, domaine, password, 0, None,
-                            'cmd.exe /C "cd /D \"%s\" & \"%s\" %s"' % (os.getcwd(), sys.argv[0], pass_uac),
-                            lpStartupInfo=lpStartupInfo)
+                            cmd, lpStartupInfo=lpStartupInfo)
 
 def pass_uac():
     ShellExecuteEx(nShow=win32con.SW_SHOWNORMAL, fMask=shellcon.SEE_MASK_NOCLOSEPROCESS, lpVerb='runas', lpFile=sys.argv[0])

@@ -73,3 +73,8 @@ AutoAcceptNoDSM=0
 RequireEncryption=0
 PreemptiveUpdates=0
 
+[192.168.2.15]
+x=-1272
+y=107
+w=1264
+h=769

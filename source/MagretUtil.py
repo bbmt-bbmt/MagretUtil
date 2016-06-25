@@ -1,12 +1,9 @@
 #! python3
 # coding: utf-8
-#todo
-# multithreader par machine
-#counter en %
-#nettoyer le code
-#corriger affichage lors d'uninstall rouge
-#erreur lors de init par thread pour les numero
 
+# todo
+# multithreader par machine
+# nettoyer le code
 
 import os
 import sys
@@ -37,14 +34,12 @@ stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.INFO)
 logger_info.addHandler(stream_handler)
 
-#from Machine import Machine
 from Groupe import Groupe
 from Salle import Salle
 import commandes
-from var_global import *
+import var_global
 import Privilege
 import AutoComplete
-# import alias
 
 
 def _protect_quotes(text):
@@ -101,7 +96,7 @@ def erreur_final(e_type, e_value, e_tb):
     return
 
 
-def init_groupes(ini_groupes):
+def init_groupes_old(ini_groupes):
     global groupes, selected_groupes, machines_dict
 
     for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
@@ -114,32 +109,60 @@ def init_groupes(ini_groupes):
     machines_dict.update({machine.name: machine for g in groupes for machine in g})
     return
 
-def init_groupes2(ini_groupes):
-    global groupes, selected_groupes, machines_dict
-    groupes_machines = {}
+
+def init_groupes(ini_groupes):
+    groupes_machines_names = {}
+    all_names_machines = []
+
     for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
+        # on reécrit le nom des machines
         num = len(str(nbre)) if nbre >= 10 else 2
         str_template = '%s-P%0--i'.replace('--', str(num))
-        noms_machines = [str_template % (ini_salle, i) for i in range(1, nbre + 1)]
-        groupes_machines[ini_salle] = noms_machines
+        names_machines = [str_template % (ini_salle, i) for i in range(1, nbre + 1)]
+        # dict qui fait le lien nom groupe-noms de machines
+        groupes_machines_names[ini_salle] = names_machines
+        # on crée une salle vide qu'on remplire plus tard
+        # on l'ajoute aux groupes globaux
+        var_global.groupes.append(Salle(ini_salle, 0))
+        all_names_machines.extend(names_machines)
+
     for ini_groupe, list_machines in ini_groupes['Groupes'].items():
         list_machines = list_machines.split(',')
-        groupes_machines[ini_groupe] = list_machines
-    print(groupes_machines)
+        groupes_machines_names[ini_groupe] = list_machines
+        all_names_machines.extend(list_machines)
+        var_global.groupes.append(Groupe(ini_groupe, []))
+
+    # code ansi pour remonter le curseur : c'est plus jolie
+    up = len(var_global.groupes)
+    print('\x1b[%sA' % up)
+
+    # on crée un groupe avec toute les machines, ça permet de lancer
+    # une action en multithreadant sur toutes les machines
+    # on met à jour le dictionnaire des machines existantes
+    var_global.groupe_selected_machines = Groupe('en cours', all_names_machines)
+    var_global.machines_dict.update(var_global.groupe_selected_machines.dict_machines)
+
+    # on remplie les groupes avec les machines créés au dessus
+    for g in var_global.groupes:
+        machines = [i for k, i in var_global.machines_dict.items()
+                    if k in groupes_machines_names[g.name]]
+        g.machines = machines
+        g.dict_machines = {m.name: m for m in machines}
+        g.machines.sort(key=lambda x: x.name)
     return
 
+
 def main():
-    global domaine, machines_dict
     sys.excepthook = erreur_final
 
     ini_groupes, dom = lire_fichier_ini('conf.ini')
     # on initialise la variable domaine qui contient le login administrateur
     # du domaine
-    domaine.update(dom)
+    var_global.domaine.update(dom)
 
     # Si le login du fichier config est différent que celui avec lequel
     # on est connecté, on lance la procédure délévation de privilège
-    if domaine['login'] is not None and getpass.getuser() != domaine['login']:
+    if var_global.domaine['login'] is not None and getpass.getuser() != var_global.domaine['login']:
         commandes.password([])
 
     # Si une demande de bypasser l'uac est demandé, on lance la procédure
@@ -147,11 +170,8 @@ def main():
         Privilege.pass_uac()
         raise SystemExit(0)
 
-    #init_groupes2(ini_groupes)
-    #os.system("pause")
-
     logger_info.info('Création des alias')
-    alias_cmd = lire_alias_ini()
+    alias_cmd = var_global.lire_alias_ini()
 
     logger_info.info('Initialisation des salles :')
     init_groupes(ini_groupes)
@@ -181,6 +201,12 @@ def main():
         cmd = cmd.lower()
         cmd_funct = getattr(commandes, cmd, commandes.help)
         try:
+            # on efface la dernière erreur avant de lancer
+            # la prochaine commande
+            if cmd != 'errors':
+                for m in var_global.groupe_selected_machines:
+                    m.message_erreur = ''
+
             cmd_funct(param)
 
             # nettoie une partie de ceux qui a été laissé par les threads
