@@ -60,7 +60,7 @@ def lire_fichier_ini(fichier):
     try:
         config = configparser.ConfigParser()
         config.read(fichier, encoding="utf-8-sig")
-    except configparser.Error as e:
+    except configparser.Error:
         print("erreur lors de l'initialisation du fichier ini : ")
         raise SystemExit(0)
 
@@ -149,6 +149,7 @@ def init_groupes(ini_groupes):
         g.machines = machines
         g.dict_machines = {m.name: m for m in machines}
         g.machines.sort(key=lambda x: x.name)
+    var_global.groupes.sort(key=lambda x: x.name)
     return
 
 

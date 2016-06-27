@@ -306,6 +306,10 @@ class Machine:
                 self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
                 if w.com_error is not None:
                     self.message_erreur += fix_str(w.com_error.strerror)
+            # pour gérer une erreur d'import qui peut arriver dans le module wmi ????
+            except ImportError:
+                self.message_erreur += self.name + " erreur wmi"
+
 
         if self.etat == ETEINT:
             try:
@@ -467,6 +471,9 @@ efface les erreurs, met à jour l'état, l'ip """
 
     def uninstall(self, name):
         prog_3264 = self.list_prog(name)
+        # si la liste est vide, il n'y a rien à faire
+        if not prog_3264:
+            return
         prog = prog_3264[0].copy()
         prog.update(prog_3264[1])
         if len(prog) != 1 or not prog:

@@ -88,6 +88,7 @@ Usage:
     var_global.groupe_selected_machines.machines = machines
     var_global.groupe_selected_machines.dict_machines = {m.name: m for m in machines}
     var_global.groupe_selected_machines.machines.sort(key=lambda x: x.name)
+    var_global.selected_groupes.sort(key=lambda x: x.name)
     selected([])
     return
 
@@ -155,10 +156,12 @@ Usage:
         g.machines = machines
         g.dict_machines = {m.name: m for m in machines}
         g.machines.sort(key=lambda x: x.name)
-    # on ajoute les nouveaux groupes dans la liste des groupes
-    # et dans selected_groupes
-        var_global.groupes.append(g)
+    # on ajoute les nouveaux groupes dans la liste des groupes sauf 
+    # si c'est le groupe AUTRES et dans selected_groupes
         var_global.selected_groupes.append(g)
+        if groupe.name == "AUTRES":
+            continue
+        var_global.groupes.append(g)
 
     # code ansi pour remonter le curseur : c'est plus jolie
     up = len(var_global.selected_groupes)
@@ -331,18 +334,19 @@ Usage:
     if arg['help']:
         print(doc)
         return
+    print("Cette commande peut prendre du temps pour se terminer")
+    print()
     if arg['list']:
-        print("Cette commande peut prendre du temps pour se terminer")
-        print("Si le programme a desinstaller était rouge dans prog list")
-        print("Utiliser la commande result pour afficher la commande spécifique pour desinstaller")
-        print("(Utiliser run cmd pour lancer cette commande)")
-        print("(Pour une desinstallation silencieuse penser à /S ou /silent)")
         try:
             arg['<filter>'] = arg['<filter>'].strip('"')
         except AttributeError:
             pass
         var_global.groupe_selected_machines.str_prog(arg['<filter>'])
     if arg['uninstall']:
+        print("Si le programme a desinstaller était rouge dans prog list")
+        print("Utiliser la commande result pour afficher la commande spécifique pour desinstaller")
+        print("(Utiliser run cmd pour lancer cette commande)")
+        print("(Pour une desinstallation silencieuse penser à /S ou /silent)")
         if arg['<logiciel>']:
             var_global.groupe_selected_machines.uninstall(arg['<logiciel>'].strip('"'))
     selected([])
