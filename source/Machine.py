@@ -354,6 +354,7 @@ efface les erreurs, met à jour l'état, l'ip """
             self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
             if w.com_error is not None:
                 self.message_erreur += fix_str(w.com_error.strerror)
+            return
         timeout = time.time() + 3
         remote_running = False
         HKLM = None
