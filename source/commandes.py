@@ -333,7 +333,7 @@ Usage:
     if arg['help']:
         print(doc)
         return
-    print("Cette commande peut prendre du temps pour se terminer")
+    print(Fore.LIGHTMAGENTA_EX + "Cette commande peut prendre du temps pour se terminer" + Fore.RESET)
     print()
     if arg['list']:
         try:
@@ -342,10 +342,10 @@ Usage:
             pass
         var_global.groupe_selected_machines.str_prog(arg['<filter>'])
     if arg['uninstall']:
-        print("Si le programme a desinstaller était rouge dans prog list")
+        print(Fore.LIGHTMAGENTA_EX + "Si le programme a desinstaller était rouge dans prog list")
         print("Utiliser la commande result pour afficher la commande spécifique pour desinstaller")
         print("(Utiliser run cmd pour lancer cette commande)")
-        print("(Pour une desinstallation silencieuse penser à /S ou /silent)")
+        print("(Pour une desinstallation silencieuse penser à /S ou /silent)" + Fore.RESET)
         if arg['<logiciel>']:
             var_global.groupe_selected_machines.uninstall(arg['<logiciel>'].strip('"'))
     selected([])
@@ -438,7 +438,7 @@ Usage:
         return
     var_global.groupe_selected_machines.wol()
     print("wol effectué")
-    print("lancé la commande update pour mettre à jours l'affichage")
+    print(Fore.LIGHTMAGENTA_EX + "lancé la commande update pour mettre à jours l'affichage" + Fore.RESET)
     return
 
 
@@ -455,7 +455,7 @@ Usage:
         return
     var_global.groupe_selected_machines.shutdown()
     print("shutdown effectué")
-    print("lancé la commande update pour mettre à jours l'affichage")
+    print(Fore.LIGHTMAGENTA_EX + "lancé la commande update pour mettre à jours l'affichage" + Fore.RESET)
     return
 
 
@@ -661,7 +661,7 @@ Usage:
         str_resultat = "\n".join([groupe.str_cmp(file_name, 100)
                                   for groupe in var_global.selected_groupes])
         print()
-        print("les machines en rouge n'ont pas le même tag utilisé lors de la dernière commande tag")
+        print(Fore.LIGHTMAGENTA_EX + "les machines en rouge n'ont pas le même tag utilisé lors de la dernière commande tag" + Fore.RESET)
         print(str_resultat)
         return
 
