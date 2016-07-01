@@ -15,6 +15,7 @@ from colorama import Fore
 
 ALLUME = 1
 
+
 def select(param):
     """Sélectionne les groupes, utiliser * pour tout selectionner
 En utilisant select reg il est possible d'utiliser une expression régulière
@@ -156,7 +157,7 @@ Usage:
         g.machines = machines
         g.dict_machines = {m.name: m for m in machines}
         g.machines.sort(key=lambda x: x.name)
-    # on ajoute les nouveaux groupes dans la liste des groupes sauf 
+    # on ajoute les nouveaux groupes dans la liste des groupes sauf
     # si c'est le groupe AUTRES et dans selected_groupes
         var_global.selected_groupes.append(g)
         if groupe.name == "AUTRES":
@@ -169,10 +170,6 @@ Usage:
 
     gc.collect()
     selected([])
-    #print(var_global.groupes)
-    #print(var_global.selected_groupes)
-    #print(var_global.groupe_selected_machines.machines)
-    #print(var_global.machines_dict)
     return
 
 

@@ -79,6 +79,7 @@ class Machine:
         self.message_erreur = ""
         self.last_output_cmd = ""
         self.update_etat()
+        # print(walk_reg_prog2(self.name, 'HKLM\\' + SUB_KEY32, '32'))
         return
 
     def wol(self):
@@ -348,13 +349,13 @@ efface les erreurs, met à jour l'état, l'ip """
         return
 
     def connect_registry(self):
-        try:
-            wmi_connect = WmiModule.WMI(self.name)
-        except WmiModule.x_wmi as w:
-            self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
-            if w.com_error is not None:
-                self.message_erreur += fix_str(w.com_error.strerror)
-            return
+        #try:
+        #    wmi_connect = WmiModule.WMI(self.name)
+        #except WmiModule.x_wmi as w:
+        #    self.message_erreur += self.name + " erreur wmi: %s \n" % w.info
+        #    if w.com_error is not None:
+        #        self.message_erreur += fix_str(w.com_error.strerror)
+        #    return
         timeout = time.time() + 3
         remote_running = False
         HKLM = None
@@ -362,12 +363,15 @@ efface les erreurs, met à jour l'état, l'ip """
         while time.time() < timeout:
             try:
                 HKLM = winreg.ConnectRegistry(self.name, winreg.HKEY_LOCAL_MACHINE)
-            except Exception:
-                break
-            remote_registry = wmi_connect.Win32_Service(name="RemoteRegistry")[0]
-            if remote_registry.State == "Running":
                 remote_running = True
                 break
+            except Exception:
+                continue
+                #break
+            #remote_registry = wmi_connect.Win32_Service(name="RemoteRegistry")[0]
+            #if remote_registry.State == "Running":
+            #    remote_running = True
+            #    break
         if remote_running is False:
             self.message_erreur += "Le registre n'est pas accessible à distance"
         return HKLM
@@ -377,6 +381,7 @@ efface les erreurs, met à jour l'état, l'ip """
         if HKLM is None:
             return ()
         result_prog32 = walk_reg_prog(HKLM, SUB_KEY32)
+
         if filter is not None:
             result_prog32 = {key: value for key, value in result_prog32.items()
                              if filter.lower() in key.lower()}
@@ -573,10 +578,10 @@ efface les erreurs, met à jour l'état, l'ip """
 def main():
     import colorama
     colorama.init()
-    m = Machine('SDE-P04')
-    print(m.str_prog("scratch"))
-    m.uninstall("scratch")
-    print(m.str_prog("scratch"))
+    m = Machine('DESKTOP-P01')
+    #print(m.str_prog("scratch"))
+    #m.uninstall("scratch")
+    #print(m.str_prog("scratch"))
 
     # print(m.last_output_cmd)
     pass
