@@ -12,6 +12,8 @@ import getpass
 from Groupe import Groupe
 from Salle import Salle
 from colorama import Fore
+import time
+import pathlib
 
 ALLUME = 1
 
@@ -636,18 +638,39 @@ def tag(param):
 dans c:
 Cette commande permet d'identifier les machines qui viennent d'être
 re-installées et qui n'ont pas le tag. Elles sont de couleur mauve.
+Les tag sont datés, tag cmp permet de comparer les tag avec le dernier
+fichier tag crée
 
 Usage:
   tag [help]
+  tag [cmp]
 """
     doc = tag.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
     if arg['help']:
         print(doc)
         return
-    tag_file = open("tag_file_install.txt", "w")
+
+    if arg['cmp']:
+        local_path = pathlib.Path('.')
+        try:
+            file_name = list(local_path.glob("tag_file_*"))[0].name
+        except IndexError:
+            file_name = ''
+        var_global.groupe_selected_machines.run_remote_cmd("dir /B c:\\" + file_name)
+        str_resultat = "\n".join([groupe.str_cmp(file_name, 100)
+                                  for groupe in var_global.selected_groupes])
+        print()
+        print("les machines en rouge n'ont pas le même tag utilisé lors de la dernière commande tag")
+        print(str_resultat)
+        return
+
+    var_global.groupe_selected_machines.run_remote_cmd("del c:\\tag_file_*")
+    subprocess.call("del tag_file_*", shell=True, stderr=subprocess.DEVNULL)
+    name_file = "tag_file_" + str(int(time.time()))
+    tag_file = open(name_file, "w")
     tag_file.close()
-    var_global.groupe_selected_machines.put("tag_file_install.txt", "c:\\")
+    var_global.groupe_selected_machines.put(name_file, "c:\\")
     for m in var_global.groupe_selected_machines:
         m.tag = True
 

@@ -88,6 +88,20 @@ class Salle(Groupe):
         resultat = "\n".join(lignes)
         return resultat
 
+    def str_cmp(self, str_ref, seuil):
+        str_resultat = Fore.LIGHTCYAN_EX + self.name + '\n' + Fore.RESET
+        for machine in self.machines:
+            num_machine = str(self.machines.index(machine) + 1)
+            score = score_str(machine.last_output_cmd, str_ref)
+            if machine.etat == ETEINT:
+                str_resultat += num_machine + ' '
+            if machine.etat == ALLUME:
+                if score < seuil:
+                    str_resultat += Fore.LIGHTRED_EX + num_machine + ' ' + Fore.RESET
+                else:
+                    str_resultat += Fore.LIGHTGREEN_EX + num_machine + ' ' + Fore.RESET
+        return str_resultat
+
 
 def main():
     pass

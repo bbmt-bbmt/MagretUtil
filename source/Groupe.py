@@ -228,7 +228,7 @@ class Groupe:
             try:
                 if machine.etat == ALLUME:
                     for name in machine.last_output_cmd.split():
-                        if re.fullmatch(r'^tag_file_install.txt$', name):
+                        if re.fullmatch(r'^tag_file_.*?$', name):
                             machine.tag = True
                     machine.last_output_cmd = ''
             finally:

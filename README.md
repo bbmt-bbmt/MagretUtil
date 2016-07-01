@@ -181,7 +181,8 @@ Les programmes affichés en rouge nécessitent une commande spécifique.
 Il faut alors lancer prog uninstall logiciel_rouge puis result nom_machine pour avoir cette commande
 ```
 prog list 
-pro uninstall scratch
+prog list java -> liste les programmes contenant java dans leur nom
+pro uninstall scratch -> desinstalle le programme contenant scratch dans son nom
 ```
 
 ## quit

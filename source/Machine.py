@@ -135,7 +135,7 @@ class Machine:
                                                          timeout,
                                                          no_wait_output)
             if result == 0:
-                self.last_output_cmd = output_data
+                self.last_output_cmd = output_data.strip()
             else:
                 self.message_erreur += "La commande %s n'a pas pu être lancé à distance\n" % cmd
         except PermissionError:
