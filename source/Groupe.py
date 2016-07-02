@@ -15,6 +15,7 @@ from Machine import REMOTE_PATH
 from colorama import Fore
 import gc
 import sys
+import pathlib
 
 
 # logger = logging.getLogger('MagretUtil.Salle')
@@ -47,7 +48,7 @@ class CounterThread:
 
 
 def score_str(str1, str2):
-    score = difflib.SequenceMatcher(None, str1, str2).ratio() * 100
+    score = difflib.SequenceMatcher(None, str1.strip(), str2.strip()).ratio() * 100
     return score
 
 
@@ -70,7 +71,7 @@ class Groupe:
         self.machines = self._run_threads(init_machine_thread, *names_machines, counter=counter_thread)
         self.dict_machines = {machine.name: machine for machine in self.machines}
         self.machines.sort(key=lambda x: x.name)
-        self.notag()
+        #self.notag()
         return
 
     def _run_threads(self, callback, *param, **kwargs):
@@ -222,21 +223,21 @@ class Groupe:
         print()
         return
 
-    def notag(self):
-        def machine_notag_thread(machine):
-            pythoncom.CoInitialize()
-            try:
-                if machine.etat == ALLUME:
-                    for name in machine.last_output_cmd.split():
-                        if re.fullmatch(r'^tag_file_.*?$', name):
-                            machine.tag = True
-                    machine.last_output_cmd = ''
-            finally:
-                pythoncom.CoUninitialize()
-            return
-        self.run_remote_cmd("dir /B c:\\ ", counter=False)
-        self._run_threads(machine_notag_thread, *self.machines)
-        return
+#    def notag(self):
+#        def machine_notag_thread(machine):
+#            pythoncom.CoInitialize()
+#            try:
+#                if machine.etat == ALLUME:
+#                    for name in machine.last_output_cmd.split():
+#                        if re.fullmatch(r'^tag_file_.*?$', name):
+#                            machine.tag = True
+#                    machine.last_output_cmd = ''
+#            finally:
+#                pythoncom.CoUninitialize()
+#            return
+#        self.run_remote_cmd("dir /B c:\\ ", counter=False)
+#        self._run_threads(machine_notag_thread, *self.machines)
+#        return
 
     def wol(self):
         for machine in self.machines:
@@ -325,6 +326,14 @@ class Groupe:
     def str_groupe(self):
         """fonction qui s'adapte en fonction du nombre de colonne de la
         console"""
+
+        # récupère le nom du dernier fichier tag
+        local_path = pathlib.Path('.')
+        try:
+            tag_file_name = list(local_path.glob("tag_file_*"))[0].name
+        except (IndexError, AttributeError):
+            tag_file_name = ''
+
         columns_term = os.get_terminal_size().columns
         lignes = [Fore.LIGHTCYAN_EX + self.name + Fore.RESET, ]
         resultat = ''
@@ -340,10 +349,12 @@ class Groupe:
                 if machine.etat == ETEINT:
                     resultat += machine.name + ' '
                 if machine.etat == ALLUME:
-                    if machine.tag is False:
+                    if machine.tag == '':
                         resultat += Fore.LIGHTMAGENTA_EX + machine.name + Fore.RESET + ' '
-                    else:
+                    elif machine.tag == tag_file_name:
                         resultat += Fore.LIGHTGREEN_EX + machine.name + Fore.RESET + ' '
+                    else:
+                        resultat += Fore.LIGHTYELLOW_EX + machine.name + Fore.RESET + ' '
             else:
                 resultat += Fore.LIGHTRED_EX + machine.name + Fore.RESET + ' '
 

@@ -12,6 +12,7 @@ import re
 import os
 import subprocess
 import time
+import pathlib
 # import logging
 import Psexec
 
@@ -72,7 +73,7 @@ class Machine:
         self.etat = ETEINT
         self.ip = None
         self.mac = None
-        self.tag = False
+        self.tag = ''
         self._vnc_uid = None
         self.prog32 = None
         self.prog64 = None
@@ -135,7 +136,7 @@ class Machine:
                                                          timeout,
                                                          no_wait_output)
             if result == 0:
-                self.last_output_cmd = output_data.strip()
+                self.last_output_cmd = output_data
             else:
                 self.message_erreur += "La commande %s n'a pas pu être lancé à distance\n" % cmd
         except PermissionError:
@@ -311,7 +312,6 @@ class Machine:
             except ImportError:
                 self.message_erreur += self.name + " erreur wmi"
 
-
         if self.etat == ETEINT:
             try:
                 # si le fichier qui stocke l'adresse mac existe,
@@ -336,6 +336,18 @@ class Machine:
                 self.message_erreur += fix_str(w.com_error.strerror)
         return
 
+    def init_tag(self):
+        if self.etat == ETEINT:
+            return
+        self.run_remote_cmd("dir /B c:\\tag_file_*")
+        name_tag_file = self.last_output_cmd
+        try:
+            name_tag_file = re.search('tag_file_[\\d]*', name_tag_file).group(0)
+        except (IndexError, AttributeError):
+            name_tag_file = ''
+        self.tag = name_tag_file
+        return
+
     def update_etat(self):
         """met à jour la machine :
 efface les erreurs, met à jour l'état, l'ip """
@@ -345,6 +357,7 @@ efface les erreurs, met à jour l'état, l'ip """
         self.prog64 = {}
         self.ping()
         self.init_mac()
+        self.init_tag()
         self.open_remote_registry()
         return
 

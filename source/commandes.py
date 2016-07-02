@@ -39,7 +39,7 @@ Usage:
     if arg['notag']:
         var_global.selected_machines = [m for name, m
                                         in var_global.machines_dict.items()
-                                        if m.etat == ALLUME and m.tag is False]
+                                        if m.etat == ALLUME and m.tag == '']
         groupe_autre = Groupe('AUTRES', [])
         groupe_autre.machines.extend(var_global.selected_machines)
         groupe_autre.machines.sort(key=lambda x: x.name)
@@ -100,6 +100,7 @@ def selected(param):
     """Affiche les groupes sélectionnées
 en vert la machine est allumée
 en mauve la machine est allumée mais  n'a pas de tag_file (elle a du être re-installée)
+en jaune la machine contient un tag mais il est plus ancien que le dernier tag utilisé
 en gris la machine est éteinte
 en rouge la machine a un message d'erreur (utiliser errors pour l'afficher)
 
@@ -638,8 +639,8 @@ def tag(param):
 dans c:
 Cette commande permet d'identifier les machines qui viennent d'être
 re-installées et qui n'ont pas le tag. Elles sont de couleur mauve.
-Les tag sont datés, tag cmp permet de comparer les tag avec le dernier
-fichier tag crée
+Les tag sont datés, si un machine apparait en jaune le tag, elle
+contient un tag plus vieux que le dernier tag utilisé
 
 Usage:
   tag [help]
@@ -651,20 +652,6 @@ Usage:
         print(doc)
         return
 
-    if arg['cmp']:
-        local_path = pathlib.Path('.')
-        try:
-            file_name = list(local_path.glob("tag_file_*"))[0].name
-        except IndexError:
-            file_name = ''
-        var_global.groupe_selected_machines.run_remote_cmd("dir /B c:\\" + file_name)
-        str_resultat = "\n".join([groupe.str_cmp(file_name, 100)
-                                  for groupe in var_global.selected_groupes])
-        print()
-        print(Fore.LIGHTMAGENTA_EX + "les machines en rouge n'ont pas le même tag utilisé lors de la dernière commande tag" + Fore.RESET)
-        print(str_resultat)
-        return
-
     var_global.groupe_selected_machines.run_remote_cmd("del c:\\tag_file_*")
     subprocess.call("del tag_file_*", shell=True, stderr=subprocess.DEVNULL)
     name_file = "tag_file_" + str(int(time.time()))
@@ -672,7 +659,7 @@ Usage:
     tag_file.close()
     var_global.groupe_selected_machines.put(name_file, "c:\\")
     for m in var_global.groupe_selected_machines:
-        m.tag = True
+        m.tag = name_file
 
     selected([])
     return

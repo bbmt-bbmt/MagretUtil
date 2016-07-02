@@ -26,6 +26,8 @@ vert  -> la machine est allumée et taggée
 
 mauve -> la machine est allumée et non taggée
 
+jaune -> la machine est allumée et taggée mais le tag est plus ancien que le dernier tag utilisé
+
 gris  -> la machine est éteinte
 
 rouge -> la machine est en erreur

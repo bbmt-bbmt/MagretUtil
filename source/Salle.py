@@ -11,6 +11,7 @@ from Machine import Machine
 from Groupe import Groupe
 from colorama import Fore
 import gc
+import pathlib
 
 
 # logger = logging.getLogger('MagretUtil.Salle')
@@ -22,7 +23,7 @@ ETEINT = 0
 
 
 def score_str(str1, str2):
-    score = difflib.SequenceMatcher(None, str1, str2).ratio() * 100
+    score = difflib.SequenceMatcher(None, str1.strip(), str2.strip()).ratio() * 100
     return score
 
 
@@ -62,6 +63,13 @@ class Salle(Groupe):
     def str_groupe(self):
         """fonction qui s'adapte en fonction du nombre de colonne de la
         console"""
+
+        # récupère le nom du dernier fichier tag
+        local_path = pathlib.Path('.')
+        try:
+            tag_file_name = list(local_path.glob("tag_file_*"))[0].name
+        except (IndexError, AttributeError):
+            tag_file_name = ''
         columns_term = os.get_terminal_size().columns
         lignes = [Fore.LIGHTCYAN_EX + self.name + Fore.RESET, ]
         resultat = ''
@@ -77,10 +85,12 @@ class Salle(Groupe):
                 if machine.etat == ETEINT:
                     resultat += str(num_machine) + ' '
                 if machine.etat == ALLUME:
-                    if machine.tag is False:
+                    if machine.tag == '':
                         resultat += Fore.LIGHTMAGENTA_EX + str(num_machine) + Fore.RESET + ' '
-                    else:
+                    elif machine.tag == tag_file_name:
                         resultat += Fore.LIGHTGREEN_EX + str(num_machine) + Fore.RESET + ' '
+                    else:
+                        resultat += Fore.LIGHTYELLOW_EX + str(num_machine) + Fore.RESET + ' '
             else:
                 resultat += Fore.LIGHTRED_EX + str(num_machine) + Fore.RESET + ' '
 

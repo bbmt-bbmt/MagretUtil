@@ -13,8 +13,8 @@
 10.Correction d'un bug dans l'élévation de privilège en 64b
 11.Utilisation d'un fichier alias.ini pour créer des racourcis de commandes
 12.Modification de la commande tag pour avoir un datage du fichier
-13.Ajour de la commande tag cmp qui permet de comparer le fichier tag
-   avec le dernier tag utilisé (grace au datage du fichier)
+13.Modification de la commande selected pour afficher en jaune des machines
+   avec un ancien tag
 
 25/04/2016 MagretUtil v0.2
 1.suppression de l'option * dans wol shutdown et errors (inutile)
