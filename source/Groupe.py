@@ -69,9 +69,10 @@ class Groupe:
         self.dict_machines = {}
         counter_thread = CounterThread(len(names_machines)) if counter else None
         self.machines = self._run_threads(init_machine_thread, *names_machines, counter=counter_thread)
+        print()
         self.dict_machines = {machine.name: machine for machine in self.machines}
         self.machines.sort(key=lambda x: x.name)
-        #self.notag()
+        # self.notag()
         return
 
     def _run_threads(self, callback, *param, **kwargs):

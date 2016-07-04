@@ -168,7 +168,7 @@ Usage:
         var_global.groupes.append(g)
 
     # code ansi pour remonter le curseur : c'est plus jolie
-    up = len(var_global.selected_groupes)
+    up = len(var_global.selected_groupes) + 1
     print('\x1b[%sA' % up)
 
     gc.collect()

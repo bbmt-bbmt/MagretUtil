@@ -133,7 +133,7 @@ def init_groupes(ini_groupes):
         var_global.groupes.append(Groupe(ini_groupe, []))
 
     # code ansi pour remonter le curseur : c'est plus jolie
-    up = len(var_global.groupes)
+    up = len(var_global.groupes) + 1
     print('\x1b[%sA' % up)
 
     # on crée un groupe avec toute les machines, ça permet de lancer
