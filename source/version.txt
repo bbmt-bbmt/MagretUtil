@@ -1,6 +1,7 @@
 __/__/____ MagretUtil v0.4
 1.Correction d'un bug d'affichage après la commande update
 
+
 01/07/2007 MagretUtil v0.3
 1.Correction d'un bug sur l'erreur 1219 dans psexec
 2.Correction d'un bug sur la fermeture du serveur winvnc lors 
