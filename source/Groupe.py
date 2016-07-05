@@ -372,7 +372,9 @@ fonction du nombre de colonne de la console """
         max_len = len(max([re.sub('\x1b.*?m', '', s) for s in liste_str], key=len, default=''))
         # nbre_col-> compte combien de sortie on va mettre sur une meme ligne
         # avec un espacement minimum de 4
-        nbre_col = columns_term // (max_len + 4)
+        # le or 1 sert dans le cas ou la taille du terminal n'est pas assez grande
+        # pour afficher même un seul résultat, ça évite le 0 colonne
+        nbre_col = columns_term // (max_len + 4) or 1
         # on decooupe, chaque element de sous_liste_str correspond à une ligne
         sous_listes_str = [liste_str[i:i + nbre_col]
                            for i in range(0, len(liste_str), nbre_col)]

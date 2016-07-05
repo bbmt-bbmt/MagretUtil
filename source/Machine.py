@@ -32,9 +32,10 @@ SUB_KEY32 = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstal
 
 def walk_reg_prog(connect, sub_key):
     result_dict = {}
-    winreg_sub_key = winreg.OpenKey(connect, sub_key,
-                                    access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
     try:
+        winreg_sub_key = winreg.OpenKey(connect, sub_key,
+                                        access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+    
         i = 0
         while True:
             str_key = winreg.EnumKey(winreg_sub_key, i)
@@ -59,7 +60,7 @@ def walk_reg_prog(connect, sub_key):
             except OSError:
                 pass
             i = i + 1
-    except OSError:
+    except (OSError,FileNotFoundError):
         pass
     return result_dict
 
