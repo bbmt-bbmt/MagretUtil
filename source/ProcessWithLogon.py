@@ -20,7 +20,7 @@ INVALID_HANDLE_VALUE = -1
 #     DWORD dwThreadId;
 # } PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
 class PROCESS_INFORMATION(ctypes.Structure):
-   _pack_   = 1
+   #_pack_   = 1
    _fields_ = [
        ('hProcess',    HANDLE),
        ('hThread',     HANDLE),
@@ -49,7 +49,7 @@ class PROCESS_INFORMATION(ctypes.Structure):
 #     HANDLE  hStdError;
 # } STARTUPINFO, *LPSTARTUPINFO;
 class STARTUPINFO(ctypes.Structure):
-   _pack_   = 1
+   #_pack_   = 1
    _fields_ = [
        ('cb',              DWORD),
        ('lpReserved',      DWORD),     # LPSTR

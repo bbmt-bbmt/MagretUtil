@@ -32,7 +32,6 @@ def get_privilege(login, password, domaine=None, uac=False):
     # changer de repertoire permet de lancer pushd sans erreur
     os.chdir("c:\\")
     new_cmd = 'cmd /C "pushd %s && \"%s\" %s"' % (path, name, pass_uac)
-
     CreateProcessWithLogonW(login, domaine, password, 0, None,
                             new_cmd, lpStartupInfo=lpStartupInfo)
 
