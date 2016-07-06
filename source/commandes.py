@@ -13,9 +13,24 @@ from Groupe import Groupe
 from Salle import Salle
 from colorama import Fore
 import time
-import pathlib
+# import pathlib
 
 ALLUME = 1
+
+def call_cmd(cmd):
+    """ Permet de lancer des commandes indépendament du chemin
+    C'est pour éviter les problèmes lorsque le fichier est dans un
+    unc path
+    """
+    path = os.getcwd()
+    # changer de repertoire permet de lancer pushd sans erreur
+    os.chdir("c:\\")
+    new_cmd = "pushd %s &&" % path + cmd
+    # le pushd permet de changer de repertoire et de ne pas avoir
+    # d'unc si on veut acceder à un fichier
+    subprocess.call(new_cmd, shell=True, creationflags=subprocess.SW_HIDE, stderr=subprocess.DEVNULL)
+    os.chdir(path)
+    return
 
 
 def select(param):
@@ -271,7 +286,8 @@ Options:
         var_global.groupe_selected_machines.clean()
         for f in os.listdir():
             if re.fullmatch(r'^todel[0-9]{1,4}[0-9|a-f]{32}$', f):
-                subprocess.call(['rd', '/s', '/q', f], shell=True)
+                call_cmd("rd /s /q %s" % f)
+                # subprocess.call(['rd', '/s', '/q', f], shell=True)
         selected([])
     return
 
@@ -653,7 +669,8 @@ Usage:
         return
 
     var_global.groupe_selected_machines.run_remote_cmd("del c:\\tag_file_*")
-    subprocess.call("del tag_file_*", shell=True, stderr=subprocess.DEVNULL)
+    call_cmd("del tag_file_*")
+    # subprocess.call("del tag_file_*", shell=True, stderr=subprocess.DEVNULL)
     name_file = "tag_file_" + str(int(time.time()))
     tag_file = open(name_file, "w")
     tag_file.close()

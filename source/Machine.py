@@ -12,7 +12,7 @@ import re
 import os
 import subprocess
 import time
-import pathlib
+# import pathlib
 # import logging
 import Psexec
 
@@ -26,16 +26,15 @@ from var_global import fix_str
 ALLUME = 1
 ETEINT = 0
 REMOTE_PATH = 'c:\\'
-SUB_KEY64 = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
-SUB_KEY32 = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+SUB_KEY_UNINSTALL = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+SUB_KEY_WOW_UNINSTALL = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
 
 
 def walk_reg_prog(connect, sub_key):
     result_dict = {}
-    try:
-        winreg_sub_key = winreg.OpenKey(connect, sub_key,
-                                        access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
-    
+    winreg_sub_key = winreg.OpenKey(connect, sub_key,
+                                    access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+    try:    
         i = 0
         while True:
             str_key = winreg.EnumKey(winreg_sub_key, i)
@@ -392,17 +391,25 @@ efface les erreurs, met à jour l'état, l'ip """
 
     def list_prog(self, filter):
         HKLM = self.connect_registry()
+        win64 = True
+        result_prog32 = {}
+        result_prog64 = {}
         if HKLM is None:
             return ()
-        result_prog32 = walk_reg_prog(HKLM, SUB_KEY32)
+        try:
+            result_prog32 = walk_reg_prog(HKLM, SUB_KEY_WOW_UNINSTALL)
+        except FileNotFoundError:
+            result_prog32 = walk_reg_prog(HKLM, SUB_KEY_UNINSTALL)
+            win64 = False
 
         if filter is not None:
             result_prog32 = {key: value for key, value in result_prog32.items()
                              if filter.lower() in key.lower()}
-        result_prog64 = walk_reg_prog(HKLM, SUB_KEY64)
-        if filter is not None:
-            result_prog64 = {key: value for key, value in result_prog64.items()
-                             if filter.lower() in key.lower()}
+        if win64 is True:
+            result_prog64 = walk_reg_prog(HKLM, SUB_KEY_UNINSTALL)
+            if filter is not None:
+                result_prog64 = {key: value for key, value in result_prog64.items()
+                                 if filter.lower() in key.lower()}
         return (result_prog32, result_prog64)
 
     def lister_users(self):
