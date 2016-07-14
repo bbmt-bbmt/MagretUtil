@@ -452,7 +452,7 @@ efface les erreurs, met à jour l'état, l'ip """
         parametre_user = {
             'name': login,
             'password': password,
-            'flags': win32netcon.UF_NORMAL_ACCOUNT | win32netcon.UF_SCRIPT,
+            'flags': win32netcon.UF_NORMAL_ACCOUNT | win32netcon.UF_SCRIPT | win32netcon.UF_DONT_EXPIRE_PASSWD,
             'priv': win32netcon.USER_PRIV_USER
         }
         try:
@@ -488,6 +488,7 @@ efface les erreurs, met à jour l'état, l'ip """
         try:
             info = win32net.NetUserGetInfo(self.name, login, 3)
             info['password'] = password
+            info['flags'] = info['flags'] | win32netcon.UF_DONT_EXPIRE_PASSWD
             win32net.NetUserSetInfo(self.name, login, 3, info)
             info = win32net.NetUserGetInfo(self.name, login, 3)
         except pywintypes.error as error:
