@@ -25,7 +25,7 @@ def call_cmd(cmd):
     path = os.getcwd()
     # changer de repertoire permet de lancer pushd sans erreur
     os.chdir("c:\\")
-    new_cmd = "pushd %s &&" % path + cmd
+    new_cmd = "pushd %s && %s && popd" % (path, cmd)
     # le pushd permet de changer de repertoire et de ne pas avoir
     # d'unc si on veut acceder à un fichier
     subprocess.call(new_cmd, shell=True, creationflags=subprocess.SW_HIDE, stderr=subprocess.DEVNULL)
@@ -655,7 +655,7 @@ def tag(param):
 dans c:
 Cette commande permet d'identifier les machines qui viennent d'être
 re-installées et qui n'ont pas le tag. Elles sont de couleur mauve.
-Les tag sont datés, si un machine apparait en jaune le tag, elle
+Les tag sont datés, si un machine apparait en jaune, elle
 contient un tag plus vieux que le dernier tag utilisé
 
 Usage:

@@ -67,23 +67,36 @@ def lire_fichier_ini(fichier):
     groupes_dict = {}
     groupes_dict['GroupesMagret'] = {}
     groupes_dict['Groupes'] = {}
+    groupes_dict['GroupesFile'] = {}    
     domaine = {}
     try:
-        for groupe in config['GroupesMagret']:
-            num_poste = config['GroupesMagret'][groupe].split('-')[1]
-            nbre_poste = int(num_poste[1:])
-            if nbre_poste != 0:
-                groupes_dict['GroupesMagret'][groupe.upper()] = nbre_poste
+        try:
+            for groupe in config['GroupesMagret']:
+                num_poste = config['GroupesMagret'][groupe].split('-')[1]
+                try:
+                    nbre_poste = int(num_poste[1:])
+                except ValueError:
+                    nbre_poste = 0
+                if nbre_poste != 0:
+                    groupes_dict['GroupesMagret'][groupe.upper()] = nbre_poste
+        except KeyError:
+            print("Aucun groupe Magret")
 
-        for groupe in config['Groupes']:
-            groupes_dict['Groupes'][groupe.upper()] = config['Groupes'][groupe]
-    except ValueError:
-        pass
+        try:
+            for groupe in config['Groupes']:
+                groupes_dict['Groupes'][groupe.upper()] = config['Groupes'][groupe]
+        except KeyError:
+            print("Aucun groupe non Magret")
+
+        try:
+            groupes_dict['GroupesFile']['file'] = config['GroupesFile']['file'] 
+        except KeyError:
+            print("Aucun fichier pour définir des groupes")
+
     except Exception as e:
         print('Erreur de lecture du fichier config')
         logger.critical(e)
         raise SystemExit(0)
-
     domaine['name'] = config.get('Domaine', 'domaine', fallback=None)
     domaine['login'] = config.get('Domaine', 'login', fallback=None)
     return groupes_dict, domaine
@@ -96,24 +109,25 @@ def erreur_final(e_type, e_value, e_tb):
     return
 
 
-def init_groupes_old(ini_groupes):
-    global groupes, selected_groupes, machines_dict
-
-    for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
-        groupes.append(Salle(ini_salle, nbre))
-    for ini_groupe, list_machine in ini_groupes['Groupes'].items():
-        list_machine = list_machine.split(',')
-        groupes.append(Groupe(ini_groupe, list_machine))
-    groupes.sort(key=lambda x: x.name)
-
-    machines_dict.update({machine.name: machine for g in groupes for machine in g})
-    return
+# def init_groupes_old(ini_groupes):
+#     global groupes, selected_groupes, machines_dict
+# 
+#     for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
+#         groupes.append(Salle(ini_salle, nbre))
+#     for ini_groupe, list_machine in ini_groupes['Groupes'].items():
+#         list_machine = list_machine.split(',')
+#         groupes.append(Groupe(ini_groupe, list_machine))
+#     groupes.sort(key=lambda x: x.name)
+# 
+#     machines_dict.update({machine.name: machine for g in groupes for machine in g})
+#     return
 
 
 def init_groupes(ini_groupes):
     groupes_machines_names = {}
     all_names_machines = []
 
+    # [GroupesMagret]
     for ini_salle, nbre in ini_groupes['GroupesMagret'].items():
         # on reécrit le nom des machines
         num = len(str(nbre)) if nbre >= 10 else 2
@@ -126,11 +140,25 @@ def init_groupes(ini_groupes):
         var_global.groupes.append(Salle(ini_salle, 0))
         all_names_machines.extend(names_machines)
 
+    # [Groupes]
     for ini_groupe, list_machines in ini_groupes['Groupes'].items():
         list_machines = list_machines.split(',')
         groupes_machines_names[ini_groupe] = list_machines
         all_names_machines.extend(list_machines)
         var_global.groupes.append(Groupe(ini_groupe, []))
+
+    # [GroupesFile]
+    try:
+        file = open(ini_groupes['GroupesFile']['file'], encoding="utf-8-sig", errors='replace')
+        for line in file:
+            list_name = line.strip(" \n,").split(',')
+            if list_name[1:]:
+                all_names_machines.extend(list_name[1:])
+                groupes_machines_names[list_name[0]] = list_name[1:]
+                var_global.groupes.append(Groupe(list_name[0], []))
+
+    except (FileNotFoundError, KeyError):
+        pass
 
     # code ansi pour remonter le curseur : c'est plus jolie
     up = len(var_global.groupes) + 1

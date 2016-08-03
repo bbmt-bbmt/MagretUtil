@@ -4,6 +4,7 @@
 3.Modification pour ne pas bugger avec les unc path 
   (commande privilege et run clean)
 4.Correction d'un bug dans l'expiration des comptes
+5.Ajout de la section GroupesFile dans le fichier conf
 
 01/07/2007 MagretUtil v0.3
 1.Correction d'un bug sur l'erreur 1219 dans psexec
