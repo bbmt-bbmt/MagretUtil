@@ -45,9 +45,15 @@ def init_auto_complete():
 
     option_tree = {
         "select": cmd_select,
-        "selected": ["help"],
-        "update": ["help"],
-        "tag": ["help"],
+        "selected": {
+            "help": []
+        },
+        "update": {
+            "help": []
+        },
+        "tag": {
+            "help": []
+        },
         "users": {
             "add": ["admin"],
             "del": [],
