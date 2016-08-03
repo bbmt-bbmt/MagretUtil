@@ -33,8 +33,12 @@ class Completer:
 
     def complete(self, text, state):
         words = readline.get_line_buffer().split()
-        results = self.walk(words, self.option_tree) + [None]
-        return results[state]
+        # on premier appel au calcul la liste des options
+        # pluto que de caluler la liste de manière récursive, on pourrait faire un itérateur avec yield
+        # (pour s'entrainer)
+        if state == 0:
+            self.results = self.walk(words, self.option_tree) + [None]
+        return self.results[state]
 
 
 def init_auto_complete():
