@@ -16,14 +16,15 @@ import getpass
 
 
 from logging import FileHandler
+from colorama import Fore
 import colorama
 colorama.init()
 
 
 logger = logging.getLogger('MagretUtil')
-logger_info = logging.getLogger('Info')
+#logger_info = logging.getLogger('Info')
 logger.setLevel(logging.WARNING)
-logger_info.setLevel(logging.INFO)
+#logger_info.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s :: %(name)s :: %(levelname)s\n' + '=' * 100 + '\n%(message)s' + '=' * 100)
 # file_handler = RotatingFileHandler('error.log', mode='w', 1000000, 1)
 file_handler = FileHandler('error.log', 'w')
@@ -32,7 +33,7 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.INFO)
-logger_info.addHandler(stream_handler)
+#logger_info.addHandler(stream_handler)
 
 from Groupe import Groupe
 from Salle import Salle
@@ -61,7 +62,7 @@ def lire_fichier_ini(fichier):
         config = configparser.ConfigParser()
         config.read(fichier, encoding="utf-8-sig")
     except configparser.Error:
-        print("erreur lors de l'initialisation du fichier ini : ")
+        print(Fore.LIGHTRED_EX + "[!] Erreur lors de l'initialisation du fichier ini : " + Fore.RESET)
         raise SystemExit(0)
 
     groupes_dict = {}
@@ -80,21 +81,21 @@ def lire_fichier_ini(fichier):
                 if nbre_poste != 0:
                     groupes_dict['GroupesMagret'][groupe.upper()] = nbre_poste
         except KeyError:
-            print("Aucun groupe Magret")
+            print(Fore.LIGHTMAGENTA_EX + "[!] Aucun groupe Magret" + Fore.RESET)
 
         try:
             for groupe in config['Groupes']:
                 groupes_dict['Groupes'][groupe.upper()] = config['Groupes'][groupe]
         except KeyError:
-            print("Aucun groupe non Magret")
+            print(Fore.LIGHTMAGENTA_EX + "[!] Aucun groupe non Magret" + Fore.RESET)
 
         try:
             groupes_dict['GroupesFile']['file'] = config['GroupesFile']['file'] 
         except KeyError:
-            print("Aucun fichier pour définir des groupes")
+            print(Fore.LIGHTMAGENTA_EX + "[!] Aucun fichier pour définir des groupes" + Fore.RESET)
 
     except Exception as e:
-        print('Erreur de lecture du fichier config')
+        print(Fore.LIGHTRED_EX + '[!] Erreur de lecture du fichier config' + Fore.RESET)
         logger.critical(e)
         raise SystemExit(0)
     domaine['name'] = config.get('Domaine', 'domaine', fallback=None)
@@ -103,7 +104,8 @@ def lire_fichier_ini(fichier):
 
 
 def erreur_final(e_type, e_value, e_tb):
-    print('erreur critique, voir le fichier de log')
+    print(Fore.LIGHTRED_EX + '[!] Erreur critique, voir le fichier de log' + Fore.RESET)
+    os.system("pause")
     logger.critical(''.join(traceback.format_exception(e_type, e_value, e_tb)))
     # pdb.post_mortem(e_tb)
     return
@@ -157,7 +159,9 @@ def init_groupes(ini_groupes):
                 groupes_machines_names[list_name[0]] = list_name[1:]
                 var_global.groupes.append(Groupe(list_name[0], []))
 
-    except (FileNotFoundError, KeyError):
+    except FileNotFoundError:
+        print(Fore.LIGHTRED_EX + "[!] Fichier csv introuvable" + Fore.RESET)
+    except KeyError:
         pass
 
     # code ansi pour remonter le curseur : c'est plus jolie
@@ -183,6 +187,12 @@ def init_groupes(ini_groupes):
 
 def main():
     sys.excepthook = erreur_final
+    try:
+        if not os.path.isdir('mac'):
+            os.mkdir('mac')
+    except:
+        print(Fore.LIGHTRED_EX + "[!] Erreur lors de la création du répertoire mac" + Fore.RESET)
+        os.system("pause")
 
     ini_groupes, dom = lire_fichier_ini('conf.ini')
     # on initialise la variable domaine qui contient le login administrateur
@@ -199,10 +209,11 @@ def main():
         Privilege.pass_uac()
         raise SystemExit(0)
 
-    logger_info.info('Création des alias')
+    #logger_info.info('Création des alias')
+    print(Fore.LIGHTGREEN_EX + '[+] Création des alias' + Fore.RESET)
     alias_cmd = var_global.lire_alias_ini()
 
-    logger_info.info('Initialisation des salles :')
+    print(Fore.LIGHTGREEN_EX + '[+] Initialisation des salles :' + Fore.RESET)
     init_groupes(ini_groupes)
 
     AutoComplete.init_auto_complete()
@@ -211,6 +222,8 @@ def main():
     print('\x1b[2J', end='')
 
     commandes.select(['*'])
+    print('-' * (os.get_terminal_size().columns - 1))
+    print(Fore.LIGHTGREEN_EX + "Taper help ou la touche 'enter' pour obtenir de l'aide" + Fore.RESET)
     print('-' * (os.get_terminal_size().columns - 1))
 
     while True:

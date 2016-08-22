@@ -518,6 +518,7 @@ class VncViewer:
 
 def vnc(param):
     """Lance/ferme une session vnc sur la machine donnée
+ATTENTION: ne marche pas sous windows XP
 
 Usage:
   vnc help
@@ -645,7 +646,7 @@ Usage:
     except OSError as o:
         str_resultat = Fore.LIGHTRED_EX\
             + "Erreur lors de l'élevation de privilège: "\
-            + o.strerror + Fore.RESET
+            + str(o.strerror) + Fore.RESET
         print(str_resultat.encode("cp850", "replace").decode("cp850", "replace"))
     return
 
