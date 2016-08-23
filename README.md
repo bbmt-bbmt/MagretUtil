@@ -105,8 +105,9 @@ Explications des options:
 ```
 
 ## result
-Afficher le résultat de la dernière commande d'une machine
-result mix affiche le resultat de toutes les machines mélangés sans doublon
+Afficher le résultat de la dernière commande d'une machine.
+
+result mix affiche le resultat de toutes les machines mélangées sans doublon
 ```
 result <machine>
 result mix
@@ -144,13 +145,13 @@ errors clear
 ```
 
 ## tag
-tag les machines sélectionnées en mettant un fichier texte sur c:
+tag les machines sélectionnées en mettant un fichier texte sur c:\
 ```
 tag [help]
 ```
 
 ## wol
-Allume les machines selectionnées. Un dossier mac doit être crée pour stocker les adresses mac lorsque la machine est vue pour la première fois.
+Allume les machines selectionnées. Un dossier mac est créé pour stocker les adresses mac lorsque la machine est vue pour la première fois.
 ```
 wol
 ```
@@ -162,7 +163,7 @@ shutdown
 ```
 
 ## vnc
-Lance/ferme une session vnc (ultravnc) sur la machine sélectionnée
+Lance/ferme une session vnc (ultravnc) sur la machine sélectionnée. (ne marche pas avec XP)
 ```
 vnc <machine>
 vnc close <machine>
@@ -177,10 +178,13 @@ password uac
 ```
 
 ## prog
-Liste ou désinstalle un programme donné
+Liste ou désinstalle un programme donné.
+
 Les programmes affichés en vert peuvent être désinstallé directement avec prog uninstall
+
 Les programmes affichés en rouge nécessitent une commande spécifique. 
-Il faut alors lancer prog uninstall logiciel_rouge puis result nom_machine pour avoir cette commande
+
+Il faut alors lancer 'prog uninstall logiciel_rouge' puis 'result nom_machine' pour avoir la commande de désinstallation (on peut ensuite lancer cette commande avec 'run cmd')
 ```
 prog list 
 prog list java -> liste les programmes contenant java dans leur nom
