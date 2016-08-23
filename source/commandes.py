@@ -329,15 +329,18 @@ Usage:
 
 def prog(param):
     """permet d'agir sur les programmes installés des machines
-il faut utiliser la commande result pour voir le résultat
-de la commande
+il faut utiliser la commande result pour voir résultat de la commande.
+
 prog uninstall: désinstalle un programme (nom entre "" si il y a des espaces)
 prog list: liste les programmes. Si un filtre est donné, n'affiche que les
-programmes qui contiennent le filtre
-les logiciels affichés en vert peuvent être désinstallé avec prog uninstall
-les logiciels affichés en rouge nécessite une commande particulière
-après avoir lancé prog uninstall, utiliser la commande result pour
-afficher la commande de desinstallation
+programmes qui contiennent le filtre (utiliser "" si il y a des espaces)
+
+Les logiciels affichés en vert peuvent être désinstallés avec prog uninstall.
+
+Les logiciels affichés en rouge nécessitent une commande particulière 
+pour la désinstallation.
+Après avoir lancé prog uninstall, utiliser la commande result pour
+afficher la commande de désinstallation.
 
 Usage:
   prog help
@@ -360,7 +363,7 @@ Usage:
         var_global.groupe_selected_machines.str_prog(arg['<filter>'])
     if arg['uninstall']:
         print(Fore.LIGHTMAGENTA_EX + "Si le programme a desinstaller était rouge dans prog list")
-        print("Utiliser la commande result pour afficher la commande spécifique pour desinstaller")
+        print("Utiliser la commande result pour afficher la commande spécifique de désinstallation")
         print("(Utiliser run cmd pour lancer cette commande)")
         print("(Pour une desinstallation silencieuse penser à /S ou /silent)" + Fore.RESET)
         if arg['<logiciel>']:
