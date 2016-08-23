@@ -1,4 +1,4 @@
-﻿__/__/____ MagretUtil v0.4
+﻿22/08/2016 MagretUtil v0.4
 1.Correction d'un bug d'affichage après la commande update
 2.Modification pour windows XP 
 3.Modification pour ne pas bugger avec les unc path 
@@ -7,7 +7,7 @@
 5.Ajout de la section GroupesFile dans le fichier conf
 6.Création du dossier mac automatiquement
 
-01/07/2007 MagretUtil v0.3
+01/07/2016 MagretUtil v0.3
 1.Correction d'un bug sur l'erreur 1219 dans psexec
 2.Correction d'un bug sur la fermeture du serveur winvnc lors 
   de l'ouverture d'une nouvelle session vnc
