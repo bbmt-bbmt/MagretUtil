@@ -262,6 +262,8 @@ class Machine:
             self.message_erreur += "le fichier existe déja"
         except PermissionError:
             self.message_erreur += "Vous n'avez pas les droits administrateur\n"
+        except FileNotFoundError:
+            self.message_erreur += "Le fichier/dossier n'existe pas\n"
         except WmiModule.x_wmi as w:
             self.message_erreur += "erreur wmi: %s \n" % w.info
             if w.com_error is not None:

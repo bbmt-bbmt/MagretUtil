@@ -9,6 +9,7 @@ import win32wnet
 import uuid
 import threading
 
+import glob
 import time
 
 # logger = logging.getLogger('MagretUtil.psexec')
@@ -173,7 +174,9 @@ class PsExec:
             if not os.path.isdir(dest_dir):
                 os.makedirs(dest_dir)
 
-        shutil.copy(source, dest_dir)
+        # permet d'utiliser * dans source
+        for file in glob.glob(source):
+            shutil.copy(file, dest_dir)
 
     def _net_copy_back(self, source_file, dest_file):
         """ Copies fichiers ou repertoire sur la machine. """

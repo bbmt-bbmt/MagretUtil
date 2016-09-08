@@ -234,7 +234,11 @@ def main():
         param = _remove_protect_char(param)
         cmd = param[0]
         if cmd in alias_cmd:
-            param = _protect_quotes(alias_cmd[cmd])
+            # permet de créer des alias avec un parametre
+            str_replace =""
+            if param[1:]:
+                str_replace = " ".join(param[1:])
+            param = _protect_quotes(alias_cmd[cmd].replace("$$",str_replace))
             param = param.strip()
             param = param.split(' ')
             param = _remove_protect_char(param)

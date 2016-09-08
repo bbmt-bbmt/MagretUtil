@@ -4,6 +4,7 @@
 import readline
 import re
 import os
+import glob
 from var_global import *
 
 
@@ -18,11 +19,11 @@ class Completer:
 
     def walk(self, words, tree):
         if len(words) == 0:
-            results = [x + ' ' for x in tree]
+            results = [x for x in tree]
             results.sort()
             return results
         if len(words) == 1 and readline.get_line_buffer()[-1] != ' ':
-            return [x + ' ' for x in tree if x.startswith(words[0])]
+            return [x for x in tree if x.startswith(words[0])]
         else:
             if type(tree) == list:
                 return self.walk(words[1:], tree)
@@ -37,6 +38,12 @@ class Completer:
         # pluto que de caluler la liste de manière récursive, on pourrait faire un itérateur avec yield
         # (pour s'entrainer)
         if state == 0:
+            # le glob permet de modifier dynamiquement la liste des fichiers qui peuvent
+            # être autocompléter dans les commandes qui manipulent un path
+            if words[-1:]:
+                self.option_tree["put"] = glob.glob(words[-1] + "*")
+                self.option_tree["run"]["file"] = [f for f in glob.glob(words[-1] + "*") 
+                                            if re.fullmatch(".*(\.exe|\.msi)", f) or os.path.isdir(f)] + ["--param", "--timeout", "--no-wait"]
             self.results = self.walk(words, self.option_tree) + [None]
         return self.results[state]
 
@@ -69,8 +76,7 @@ def init_auto_complete():
         },
         "run": {
             "cmd": ["--param", "--timeout", "--no-wait"],
-            "file": ["--param", "--timeout", "--no-wait"] +
-                    [f for f in os.listdir() if re.fullmatch(".*(\.exe|\.msi)", f)],
+            "file": ["--param", "--timeout", "--no-wait"],
             "result": machines_name,
             "clean": [],
             "help": []
@@ -97,6 +103,7 @@ def init_auto_complete():
     for key in alias_cmd:
         option_tree[key] = []
 
+    readline.set_completer_delims(' ')
     readline.parse_and_bind('tab: complete')
     completer = Completer(option_tree)
     readline.set_completer(completer.complete)

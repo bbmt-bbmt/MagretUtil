@@ -428,6 +428,7 @@ Usage:
 
 def put(param):
     """envoie un fichier dans un repertoire de destination sur les machines
+Le caratère * peut être utilisé pour envoyer plusieurs fichiers
 
 Usage:
   put [help] <path_file> <path_dir>
