@@ -60,7 +60,7 @@ class Salle(Groupe):
         self.__init__(self.name, self.nbre)
         return
 
-    def str_groupe(self):
+    def str_groupe(self, notag=False):
         """fonction qui s'adapte en fonction du nombre de colonne de la
         console"""
 
@@ -85,12 +85,12 @@ class Salle(Groupe):
                 if machine.etat == ETEINT:
                     resultat += str(num_machine) + ' '
                 if machine.etat == ALLUME:
-                    if machine.tag == '':
-                        resultat += Fore.LIGHTMAGENTA_EX + str(num_machine) + Fore.RESET + ' '
+                    if machine.tag == '' and notag:
+                        resultat += Fore.LIGHTRED_EX + str(num_machine) + Fore.RESET + ' '
                     elif machine.tag == tag_file_name:
                         resultat += Fore.LIGHTGREEN_EX + str(num_machine) + Fore.RESET + ' '
                     else:
-                        resultat += Fore.LIGHTYELLOW_EX + str(num_machine) + Fore.RESET + ' '
+                        resultat += Fore.LIGHTMAGENTA_EX + str(num_machine) + Fore.RESET + ' '
             else:
                 resultat += Fore.LIGHTRED_EX + str(num_machine) + Fore.RESET + ' '
 

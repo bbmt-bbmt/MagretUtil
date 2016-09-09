@@ -9,6 +9,7 @@
 7.Modification de la commande put pour permettre l'utilisation de *
 8.Possibilité d'utiliser un paramètre dans les alias
 9.Autocomplétion amélioré pour les path
+10. ajout de l'option notag à selected
 
 01/07/2016 MagretUtil v0.3
 1.Correction d'un bug sur l'erreur 1219 dans psexec

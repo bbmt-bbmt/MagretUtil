@@ -23,7 +23,8 @@ class Completer:
             results.sort()
             return results
         if len(words) == 1 and readline.get_line_buffer()[-1] != ' ':
-            return [x for x in tree if x.startswith(words[0])]
+            # le glob permet l'autocomplétion des path
+            return [x for x in tree if x.startswith(words[0])] + glob.glob(words[0] + "*")
         else:
             if type(tree) == list:
                 return self.walk(words[1:], tree)
@@ -40,10 +41,10 @@ class Completer:
         if state == 0:
             # le glob permet de modifier dynamiquement la liste des fichiers qui peuvent
             # être autocompléter dans les commandes qui manipulent un path
-            if words[-1:]:
-                self.option_tree["put"] = glob.glob(words[-1] + "*")
-                self.option_tree["run"]["file"] = [f for f in glob.glob(words[-1] + "*") 
-                                            if re.fullmatch(".*(\.exe|\.msi)", f) or os.path.isdir(f)] + ["--param", "--timeout", "--no-wait"]
+            # if words[-1:]:
+            #     self.option_tree["put"] = glob.glob(words[-1] + "*")
+            #     self.option_tree["run"]["file"] = [f for f in glob.glob(words[-1] + "*") 
+            #                                 if re.fullmatch(".*(\.exe|\.msi)", f) or os.path.isdir(f)] + ["--param", "--timeout", "--no-wait"]
             self.results = self.walk(words, self.option_tree) + [None]
         return self.results[state]
 
@@ -56,9 +57,7 @@ def init_auto_complete():
 
     option_tree = {
         "select": cmd_select,
-        "selected": {
-            "help": []
-        },
+        "selected": ["help", "notag"],
         "update": {
             "help": []
         },

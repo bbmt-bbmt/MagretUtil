@@ -21,18 +21,18 @@ import colorama
 colorama.init()
 
 
-logger = logging.getLogger('MagretUtil')
-#logger_info = logging.getLogger('Info')
-logger.setLevel(logging.WARNING)
-#logger_info.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s :: %(name)s :: %(levelname)s\n' + '=' * 100 + '\n%(message)s' + '=' * 100)
-# file_handler = RotatingFileHandler('error.log', mode='w', 1000000, 1)
-file_handler = FileHandler('error.log', 'w')
-file_handler.setLevel(logging.WARNING)
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.INFO)
+#logger = logging.getLogger('MagretUtil')
+##logger_info = logging.getLogger('Info')
+#logger.setLevel(logging.WARNING)
+##logger_info.setLevel(logging.INFO)
+#formatter = logging.Formatter('%(asctime)s :: %(name)s :: %(levelname)s\n' + '=' * 100 + '\n%(message)s' + '=' * 100)
+## file_handler = RotatingFileHandler('error.log', mode='w', 1000000, 1)
+#file_handler = FileHandler('error.log', 'w')
+#file_handler.setLevel(logging.WARNING)
+#file_handler.setFormatter(formatter)
+#logger.addHandler(file_handler)
+#stream_handler = logging.StreamHandler()
+#stream_handler.setLevel(logging.INFO)
 #logger_info.addHandler(stream_handler)
 
 from Groupe import Groupe
@@ -96,17 +96,21 @@ def lire_fichier_ini(fichier):
 
     except Exception as e:
         print(Fore.LIGHTRED_EX + '[!] Erreur de lecture du fichier config' + Fore.RESET)
-        logger.critical(e)
-        raise SystemExit(0)
+        #logger.critical(e)
+        raise e
     domaine['name'] = config.get('Domaine', 'domaine', fallback=None)
     domaine['login'] = config.get('Domaine', 'login', fallback=None)
     return groupes_dict, domaine
 
 
 def erreur_final(e_type, e_value, e_tb):
+    if e_type == KeyboardInterrupt:
+        raise SystemExit(0)
     print(Fore.LIGHTRED_EX + '[!] Erreur critique, voir le fichier de log' + Fore.RESET)
     os.system("pause")
-    logger.critical(''.join(traceback.format_exception(e_type, e_value, e_tb)))
+    with open("error.log", "w") as f:
+        f.write(''.join(traceback.format_exception(e_type, e_value, e_tb)))
+    #logger.critical(''.join(traceback.format_exception(e_type, e_value, e_tb)))
     # pdb.post_mortem(e_tb)
     return
 

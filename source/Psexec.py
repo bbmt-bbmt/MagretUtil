@@ -144,7 +144,7 @@ class PsExec:
 
         dir_remote_path = os.path.join(self.remote_path, uid)
         file_local_path = os.path.join(pwd, file)
-        file_remote_path = os.path.join(self.remote_path, "%s\\%s" % (uid, file))
+        file_remote_path = os.path.join(self.remote_path, "%s\\%s" % (uid, os.path.basename(file)))
 
         self._net_copy(file_local_path, dir_remote_path)
 

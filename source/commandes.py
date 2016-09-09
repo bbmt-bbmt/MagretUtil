@@ -114,13 +114,17 @@ Usage:
 def selected(param):
     """Affiche les groupes sélectionnées
 en vert la machine est allumée
-en mauve la machine est allumée mais  n'a pas de tag_file (elle a du être re-installée)
-en jaune la machine contient un tag mais il est plus ancien que le dernier tag utilisé
+en mauve la machine est allumée mais n'a pas de tag_file (elle a du être re-installée)
+ou elle contient un tag plus ancien que le dernier tag utilisé
 en gris la machine est éteinte
 en rouge la machine a un message d'erreur (utiliser errors pour l'afficher)
 
+Pour différencier les machines sans tag de celle avec un vieux tag
+il faut utiliser l'option notag qui permet de mettre en rouge les 
+machine sans tag
+
 Usage:
-  selected [help]
+  selected [help] [notag]
 """
     doc = selected.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
@@ -130,7 +134,10 @@ Usage:
         print('Auncun groupe sélectionné')
     else:
         print('-' * (os.get_terminal_size().columns - 1))
-        print("\n".join([g.str_groupe() for g in var_global.selected_groupes]).strip())
+        if arg['notag']:
+            print("\n".join([g.str_groupe(notag=True) for g in var_global.selected_groupes]).strip())
+        else:         
+            print("\n".join([g.str_groupe() for g in var_global.selected_groupes]).strip())
     return
 
 
@@ -659,9 +666,8 @@ def tag(param):
     """tag les machines selectionnées en posant un fichier txt
 dans c:
 Cette commande permet d'identifier les machines qui viennent d'être
-re-installées et qui n'ont pas le tag. Elles sont de couleur mauve.
-Les tag sont datés, si un machine apparait en jaune, elle
-contient un tag plus vieux que le dernier tag utilisé
+re-installées et qui n'ont pas le tag ou des machines qui ont 
+un tag plus ancien que le dernier tag utilisé. Elles sont de couleur mauve.
 
 Usage:
   tag [help]
