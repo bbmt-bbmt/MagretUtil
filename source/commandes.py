@@ -38,6 +38,7 @@ def select(param):
 En utilisant select reg il est possible d'utiliser une expression régulière
 pour sélectionner les salles
 select notag permet de selectionner toutes les machines non tagger
+select oldtag selectionne les machine avec un vieux tag
 (pour finir une installation avec les logiciels installés depuis le dernier master)
 
 Usage:

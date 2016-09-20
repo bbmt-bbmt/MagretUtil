@@ -1,7 +1,7 @@
 # MagretUtil
 psexec like utilisant wmi pour réseaux Magret.
 
-Le logiciel est multithreadé par salle.
+Le logiciel est multithreadé.
 
 Toutes les versions : [release](https://github.com/bbmt-bbmt/MagretUtil/releases)
 
@@ -32,12 +32,16 @@ gris  -> la machine est éteinte
 
 rouge -> la machine est en erreur
 
+Pour différencier les machines sans tag de celle avec un vieux tag il faut utiliser l'option tagview qui permet de mettre en rouge les 
+machine sans tag et en mauve celles qui ont un vieux tag
+
 ## select
 Selectionne les salles, machines où les prochaines commandes agiront.
 
 On peut passer une expression régulière
 
 select notag permet de choisir toutes les machines non taggées
+select oldtag selectionne les machine avec un vieux tag
 ```
 select salle1 salle2 machine1 machine2
 select *
@@ -141,7 +145,6 @@ Affiche ou efface les erreurs des machines affichées en rouge
 ```
 errors <machine>
 errors
-errors clear
 ```
 
 ## tag
