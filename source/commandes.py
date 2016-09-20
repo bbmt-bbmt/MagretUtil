@@ -668,6 +668,11 @@ Usage:
             return
     user_pass = getpass.getpass('mot de passe pour le compte %s: ' % var_global.domaine['login'])
     uac = arg['uac']
+
+    # on sauvegarde le path pour le restaurer en cas d'echec de get privilege
+    # get privilege modifie le path pour éviter des erreurs si on lance l'exe 
+    # d'un UNC path
+    path = os.getcwd()
     try:
         Privilege.get_privilege(var_global.domaine['login'],
                                 user_pass, var_global.domaine['name'], uac)
@@ -675,8 +680,11 @@ Usage:
     except OSError as o:
         str_resultat = Fore.LIGHTRED_EX\
             + "Erreur lors de l'élevation de privilège: "\
-            + str(o.strerror) + Fore.RESET
+            + var_global.fix_str(o.strerror) + Fore.RESET
         print(str_resultat.encode("cp850", "replace").decode("cp850", "replace"))
+        # on restaure le path pour que l'autocompletion soit cale sur le repertoire courant
+        # et pour pouvoir lire le fichier alias.ini lors de l'initialisation
+        os.chdir(path)
         os.system("pause")
     return
 
