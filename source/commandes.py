@@ -13,7 +13,7 @@ from Groupe import Groupe
 from Salle import Salle
 from colorama import Fore
 import time
-# import pathlib
+import pathlib
 
 ALLUME = 1
 
@@ -43,6 +43,7 @@ select notag permet de selectionner toutes les machines non tagger
 Usage:
   select help
   select notag
+  select oldtag
   select reg <expression_reg>
   select <nom>...
 """
@@ -60,6 +61,22 @@ Usage:
         groupe_autre.machines.sort(key=lambda x: x.name)
         groupe_autre.dict_machines = {m.name: m for m in var_global.selected_machines}
         var_global.selected_groupes = [groupe_autre, ]
+    if arg['oldtag']:
+        # récupère le nom du dernier fichier tag
+        local_path = pathlib.Path('.')
+        try:
+            tag_file_name = list(local_path.glob("tag_file_*"))[0].name
+        except (IndexError, AttributeError):
+            tag_file_name = 'no_tag'
+        var_global.selected_machines = [m for name, m
+                                        in var_global.machines_dict.items()
+                                        if m.etat == ALLUME and m.tag != tag_file_name and m.tag != '']
+        groupe_autre = Groupe('AUTRES', [])
+        groupe_autre.machines.extend(var_global.selected_machines)
+        groupe_autre.machines.sort(key=lambda x: x.name)
+        groupe_autre.dict_machines = {m.name: m for m in var_global.selected_machines}
+        var_global.selected_groupes = [groupe_autre, ]
+        pass
     if arg['reg']:
         try:
             pattern = re.compile(arg['<expression_reg>'])
@@ -120,24 +137,24 @@ en gris la machine est éteinte
 en rouge la machine a un message d'erreur (utiliser errors pour l'afficher)
 
 Pour différencier les machines sans tag de celle avec un vieux tag
-il faut utiliser l'option notag qui permet de mettre en rouge les 
-machine sans tag
+il faut utiliser l'option tagview qui permet de mettre en rouge les 
+machine sans tag et en mauve celles qui ont un vieux tag
 
 Usage:
-  selected [help] [notag]
+  selected [help] [tagview]
 """
     doc = selected.__doc__
     arg = docopt2.docopt(doc, argv=param, help=False)
+    notag = False
     if arg['help']:
         return print(doc)
     if var_global.selected_groupes == []:
         print('Auncun groupe sélectionné')
     else:
         print('-' * (os.get_terminal_size().columns - 1))
-        if arg['notag']:
-            print("\n".join([g.str_groupe(notag=True) for g in var_global.selected_groupes]).strip())
-        else:         
-            print("\n".join([g.str_groupe() for g in var_global.selected_groupes]).strip())
+        if arg['tagview']:
+            notag = True
+        print("\n".join([g.str_groupe(notag) for g in var_global.selected_groupes]).strip())
     return
 
 
@@ -659,6 +676,7 @@ Usage:
             + "Erreur lors de l'élevation de privilège: "\
             + str(o.strerror) + Fore.RESET
         print(str_resultat.encode("cp850", "replace").decode("cp850", "replace"))
+        os.system("pause")
     return
 
 

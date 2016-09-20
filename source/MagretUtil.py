@@ -198,10 +198,20 @@ def main():
         print(Fore.LIGHTRED_EX + "[!] Erreur lors de la création du répertoire mac" + Fore.RESET)
         os.system("pause")
 
+    print(Fore.LIGHTGREEN_EX + '[+] Lecture de conf.ini' + Fore.RESET)
     ini_groupes, dom = lire_fichier_ini('conf.ini')
     # on initialise la variable domaine qui contient le login administrateur
     # du domaine
     var_global.domaine.update(dom)
+
+    #logger_info.info('Création des alias')
+    print(Fore.LIGHTGREEN_EX + '[+] Création des alias' + Fore.RESET)
+    alias_cmd = var_global.lire_alias_ini()
+
+    print(Fore.LIGHTGREEN_EX + '[+] Initialisation des salles :' + Fore.RESET)
+    init_groupes(ini_groupes)
+
+    AutoComplete.init_auto_complete()
 
     # Si le login du fichier config est différent que celui avec lequel
     # on est connecté, on lance la procédure délévation de privilège
@@ -212,15 +222,6 @@ def main():
     if sys.argv[1:] and sys.argv[1] == "pass_uac":
         Privilege.pass_uac()
         raise SystemExit(0)
-
-    #logger_info.info('Création des alias')
-    print(Fore.LIGHTGREEN_EX + '[+] Création des alias' + Fore.RESET)
-    alias_cmd = var_global.lire_alias_ini()
-
-    print(Fore.LIGHTGREEN_EX + '[+] Initialisation des salles :' + Fore.RESET)
-    init_groupes(ini_groupes)
-
-    AutoComplete.init_auto_complete()
 
     # efface l'écran
     print('\x1b[2J', end='')

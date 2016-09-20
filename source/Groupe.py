@@ -357,7 +357,7 @@ class Groupe:
                     # le paramètre notag permet d'afficher en rouge les machines sans tag
                     # et en mauve celle avec un vieux tag
                     if machine.tag == '' and notag:
-                        resultat += Fore.RED_EX + machine.name + Fore.RESET + ' '
+                        resultat += Fore.LIGHTRED_EX + machine.name + Fore.RESET + ' '
                     elif machine.tag == tag_file_name:
                         resultat += Fore.LIGHTGREEN_EX + machine.name + Fore.RESET + ' '
                     else:

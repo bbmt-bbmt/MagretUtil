@@ -20,7 +20,6 @@ un dict{'alias':'commande'}
                       "result", "prog", "cmp", "flush", "put", "wol",
                       "shutdown", "vnc", "help", "errors", "password",
                       "tag", "quit"}
-
     try:
         for alias in config['Alias']:
             if alias not in commandes_name:

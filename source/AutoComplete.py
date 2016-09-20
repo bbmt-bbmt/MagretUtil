@@ -2,10 +2,8 @@
 # coding: utf-8
 
 import readline
-import re
-import os
 import glob
-from var_global import *
+import var_global
 
 
 class Completer:
@@ -50,14 +48,13 @@ class Completer:
 
 
 def init_auto_complete():
-    global machines_dict, groupes
-    groupe_name = [g.name for g in groupes]
-    machines_name = [name for name in machines_dict]
-    cmd_select = groupe_name + ['help', 'reg', 'notag'] + machines_name
+    groupe_name = [g.name for g in var_global.groupes]
+    machines_name = [name for name in var_global.machines_dict]
+    cmd_select = groupe_name + ['help', 'reg', 'notag', 'oldtag'] + machines_name
 
     option_tree = {
         "select": cmd_select,
-        "selected": ["help", "notag"],
+        "selected": ["help", "tagview"],
         "update": {
             "help": []
         },
@@ -98,7 +95,7 @@ def init_auto_complete():
         "vnc": ['help', "close"] + machines_name
     }
 
-    alias_cmd = lire_alias_ini()
+    alias_cmd = var_global.lire_alias_ini()
     for key in alias_cmd:
         option_tree[key] = []
 
